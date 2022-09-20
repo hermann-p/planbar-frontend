@@ -1,0 +1,34 @@
+$col-width-week: 20px;
+
+.timeline-view {
+  overflow: auto;
+  position: relative;
+}
+
+.timeline {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 1px;
+}
+
+.timeline-view--week {
+  .project-timeline__item {
+    width: $col-width-week;
+  }
+
+  .timeline-header__item {
+    width: $col-width-week;
+    &--start {
+    }
+  }
+}
+
+.project-timeline__item {
+  &--active {
+  }
+
+  &__indicator {
+    padding: 5px 0;
+    background-color: red;
+  }
+}
