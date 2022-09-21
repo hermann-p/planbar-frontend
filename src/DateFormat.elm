@@ -56,7 +56,7 @@ toGermanMonth month =
 
 toGermanShortMonth : Date.Month -> String
 toGermanShortMonth month =
-    toGermanMonth month |> String.slice 0 2
+    toGermanMonth month |> String.slice 0 3
 
 
 toGermanWeekday : Date.Weekday -> String
@@ -86,4 +86,4 @@ toGermanWeekday weekday =
 
 toGermanShortWeekday : Date.Weekday -> String
 toGermanShortWeekday day =
-    toGermanWeekday day |> String.slice 0 3
+    toGermanWeekday day |> String.slice 0 2
