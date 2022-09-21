@@ -4,7 +4,7 @@ import Calendar
 import Date exposing (Date)
 import DateFormat exposing (de)
 import Html exposing (Html, div, section, table, tbody, td, text, thead, tr)
-import Html.Attributes exposing (class, classList, colspan)
+import Html.Attributes exposing (class, classList, rowspan)
 import Project exposing (..)
 import Time exposing (Weekday(..))
 
@@ -17,10 +17,6 @@ find pred xs =
 calendarConfig : Calendar.Config
 calendarConfig =
     { startWeekday = Mon }
-
-
-calendarFromDate date =
-    Calendar.fromDate (Just calendarConfig) date
 
 
 daysIn : Duration -> List Date
@@ -52,30 +48,28 @@ timelineHeader viewtype today days =
     let
         baseClass =
             "timeline-header__item"
-    in
-    thead [ class "timeline-header" ]
-        [ tr []
-            (List.map
+
+        columns =
+            List.map
                 (\day ->
                     td
                         [ classList <| getDayClasses viewtype today baseClass day
                         ]
                         (if isSectionStart viewtype day then
-                            [ text "yay" ]
+                            [ text <| Date.formatWithLanguage de "E ddd MMM" day ]
 
                          else
                             []
                         )
                 )
                 days
-            )
-        ]
 
-
-projectViewHeader : Project -> Html Msg
-projectViewHeader project =
-    tr [ class "timeline__project-header" ]
-        [ td [ class "timeline__project-header__title", colspan 20 ] [ text project.title ]
+        emptyColumn =
+            td [ class baseClass ] []
+    in
+    thead [ class "timeline-header" ]
+        [ tr []
+            (emptyColumn :: columns)
         ]
 
 
@@ -99,8 +93,8 @@ isJust m =
             True
 
 
-projectTimelineItem : Timeline -> Date -> Html Msg
-projectTimelineItem timeline day =
+projectTimelineItem : { timeline : Timeline, today : Date } -> Date -> Html Msg
+projectTimelineItem { timeline, today } day =
     let
         duration =
             durationFromTimeline timeline
@@ -122,6 +116,7 @@ projectTimelineItem timeline day =
 
         cssClasses =
             [ ( baseClass, True )
+            , ( baseClass ++ "--today", day == today )
             , ( baseClass ++ "--active", isActive && not hasEvent )
             , ( baseClass ++ "--event", hasEvent )
             , ( baseClass ++ "--start", day == duration.from )
@@ -140,18 +135,36 @@ projectTimelineItem timeline day =
         )
 
 
-projectTimeline : ViewType -> Date -> List Date -> Timeline -> Html Msg
-projectTimeline vt today days timeline =
+projectTimeline : { days : List Date, project : Project, today : Date } -> Timeline -> Int -> Html Msg
+projectTimeline { days, project, today } timeline idx =
     let
         baseClass =
             "project-timeline"
+
+        timelineItems =
+            List.map (projectTimelineItem { timeline = timeline, today = today }) days
     in
-    tr [ class baseClass ] (List.map (projectTimelineItem timeline) days)
+    tr [ class baseClass ]
+        (if idx == 0 then
+            projectViewHeader project :: timelineItems
+
+         else
+            timelineItems
+        )
+
+
+projectViewHeader : Project -> Html Msg
+projectViewHeader project =
+    td [ class "project-timeline__project-header", rowspan <| List.length project.timelines ] [ text project.title ]
 
 
 projectView : ViewType -> Date -> List Date -> Project -> List (Html Msg)
 projectView vt today days project =
-    projectViewHeader project :: List.map (projectTimeline vt today days) project.timelines
+    let
+        indices =
+            List.range 0 <| List.length project.timelines
+    in
+    List.map2 (projectTimeline { days = days, project = project, today = today }) project.timelines indices
 
 
 timelineView : { viewType : ViewType, duration : Duration } -> Model -> Html Msg
@@ -171,9 +184,6 @@ timelineView { viewType, duration } { projects, today } =
                     else
                         "--month"
                    )
-
-        _ =
-            Debug.log "time range" ( duration, days )
     in
     section [ class (baseClass ++ " " ++ viewClass) ]
         [ table [ class "timeline" ]

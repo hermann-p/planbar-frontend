@@ -1,4 +1,6 @@
-$col-width-week: 20px;
+$col-width-week: 60px;
+$col-width-project-header: 120px;
+$color-bg-today: beige;
 
 .timeline-view {
   overflow: auto;
@@ -18,12 +20,38 @@ $col-width-week: 20px;
 
   .timeline-header__item {
     width: $col-width-week;
-    &--start {
+  }
+  .timeline-header__item:first-of-type {
+    width: $col-width-project-header;
+  }
+}
+
+.timeline-header {
+  &__item {
+    white-space: nowrap;
+    &--section-start {
+      border-left: 1px solid lightgrey;
+    }
+    &--today {
+      background-color: $color-bg-today;
+    }
+  }
+}
+
+.project-timeline {
+  &__project-header {
+    vertical-align: top;
+    width: $col-width-project-header;
+  }
+  &__item {
+    &--today {
+      background-color: $color-bg-today;
     }
   }
 }
 
 .project-timeline__item {
+  border-left: 1px solid lightgrey;
   &--active {
   }
 
