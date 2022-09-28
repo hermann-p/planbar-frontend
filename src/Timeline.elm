@@ -5,6 +5,7 @@ import Date exposing (Date)
 import DateFormat exposing (de)
 import Html exposing (Html, div, section, table, tbody, td, text, thead, tr)
 import Html.Attributes exposing (class, classList, rowspan)
+import Html.Events exposing (onClick)
 import Project exposing (..)
 import Time exposing (Weekday(..))
 
@@ -111,9 +112,6 @@ projectTimelineItem { timeline, today } day =
         hasEvent =
             isJust event
 
-        _ =
-            Debug.log "day, active, event" ( day, isActive, hasEvent )
-
         cssClasses =
             [ ( baseClass, True )
             , ( baseClass ++ "--today", day == today )
@@ -155,7 +153,12 @@ projectTimeline { days, project, today } timeline idx =
 
 projectViewHeader : Project -> Html Msg
 projectViewHeader project =
-    td [ class "project-timeline__project-header", rowspan <| List.length project.timelines ] [ text project.title ]
+    td
+        [ class "project-timeline__project-header"
+        , rowspan <| List.length project.timelines
+        , onClick << ProjectMsg <| EditProject (Just project)
+        ]
+        [ text project.title ]
 
 
 projectView : ViewType -> Date -> List Date -> Project -> List (Html Msg)

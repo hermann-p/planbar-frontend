@@ -42,6 +42,10 @@ $color-bg-today: beige;
   &__project-header {
     vertical-align: top;
     width: $col-width-project-header;
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 1;
   }
   &__item {
     &--today {

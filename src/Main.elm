@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Browser exposing (Document)
 import Date exposing (Date)
+import Editors exposing (projectEditor)
 import Fixtures
 import Html exposing (Html, aside, div, input, li, main_, nav, section, text, ul)
 import Html.Attributes exposing (class, classList, type_)
@@ -90,6 +91,7 @@ view model =
             [ viewNavbar model
             , viewMainContent model
             ]
+        , projectEditor model.editorState.project
         ]
     }
 
@@ -105,11 +107,20 @@ initialState =
         initialDate =
             Date.fromRataDie 0
     in
-    { page = WeekView initialDate, projects = Fixtures.projects, today = initialDate, displayPeriod = { from = initialDate, to = initialDate } }
+    { page = WeekView initialDate
+    , projects = Fixtures.projects
+    , today = initialDate
+    , displayPeriod = { from = initialDate, to = initialDate }
+    , editorState =
+        { project = Nothing
+        , timeline = Nothing
+        , todo = Nothing
+        }
+    }
 
 
 now =
-    Task.perform SetToday Date.today
+    Task.perform (MainMsg << SetToday) Date.today
 
 
 main : Program () Model Msg

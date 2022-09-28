@@ -22,9 +22,19 @@ timelines =
     [ { comment = Nothing
       , people = [ Project.Person "Bob" ]
       , tags = [ Project.Tag "first", Project.Tag "last", Project.Tag "always" ]
+      , title = "TL1"
       , todos =
-            [ { comment = Nothing, date = Date.fromRataDie 738420, done = False, title = "My first task" }
-            , { comment = Nothing, date = Date.fromRataDie 738427, done = False, title = "Last one ever" }
+            [ { comment = Nothing, date = Date.fromRataDie 738420, done = True, title = "start" }
+            , { comment = Nothing, date = Date.fromRataDie 738427, done = False, title = "finish" }
+            ]
+      }
+    , { comment = Nothing
+      , people = [ Project.Person "Bob" ]
+      , tags = [ Project.Tag "first", Project.Tag "last", Project.Tag "always" ]
+      , title = "TL2"
+      , todos =
+            [ { comment = Nothing, date = Date.fromRataDie 738417, done = False, title = "go" }
+            , { comment = Nothing, date = Date.fromRataDie 738450, done = True, title = "done" }
             ]
       }
     ]
