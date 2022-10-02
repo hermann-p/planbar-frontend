@@ -1,7 +1,9 @@
 module Project exposing (..)
 
 import Date exposing (Date)
+import Dict exposing (update)
 import Html exposing (text)
+import Monocle.Lens exposing (Lens)
 
 
 type alias Duration =
@@ -71,7 +73,9 @@ type Person
 
 
 type alias Todo =
-    { title : String
+    { id : Int
+    , parentTimeline : Int
+    , title : String
     , date : Date
     , done : Bool
     , comment : Maybe String
@@ -79,7 +83,9 @@ type alias Todo =
 
 
 type alias Timeline =
-    { people : List Person
+    { id : Int
+    , parentProject : Int
+    , people : List Person
     , tags : List Tag
     , todos : List Todo
     , comment : Maybe String
@@ -88,7 +94,8 @@ type alias Timeline =
 
 
 type alias Project =
-    { timelines : List Timeline
+    { id : Int
+    , timelines : List Timeline
     , color : String
     , title : String
     , start : Date
@@ -129,6 +136,8 @@ type EditorMsg
     | SetProjectTimelines (List Timeline)
     | SetProjectComment (Maybe String)
     | EditProject (Maybe Project)
+    | EditTimeline (Maybe Timeline)
+    | EditTodo (Maybe Todo)
     | Noop
 
 
@@ -147,6 +156,7 @@ type MainMsg
 type Msg
     = ProjectMsg EditorMsg
     | MainMsg MainMsg
+    | Batch (List Msg)
 
 
 type ViewType
@@ -171,12 +181,25 @@ getInitialDuration vt day =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({ page } as model) =
     case msg of
+        Batch msgs ->
+            msgs
+                |> List.foldl
+                    (\nxt ( accum, cmds ) ->
+                        let
+                            ( state, cmd ) =
+                                update nxt accum
+                        in
+                        ( state, cmd :: cmds )
+                    )
+                    ( model, [] )
+                |> Tuple.mapSecond Cmd.batch
+
         MainMsg mainMsg ->
             case ( mainMsg, page ) of
                 ( SetActivePage page_, _ ) ->
                     case page_ of
                         WeekView date ->
-                            ( { model | page = page_, displayPeriod = getInitialDuration Week model.today }, Cmd.none )
+                            ( { model | page = page_, displayPeriod = getInitialDuration Week date }, Cmd.none )
 
                         _ ->
                             ( model, Cmd.none )
@@ -188,48 +211,111 @@ update msg ({ page } as model) =
                     ( { model | today = date, displayPeriod = getInitialDuration Month date }, Cmd.none )
 
         ProjectMsg projectMsg ->
-            ( { model | editorState = updateEditor projectMsg model.editorState }, Cmd.none )
+            updateEditor projectMsg model
 
 
-updateEditor : EditorMsg -> EditorModel -> EditorModel
-updateEditor msg ({ project } as model) =
-    case ( project, msg ) of
-        ( _, Noop ) ->
-            model
+updateEditor : EditorMsg -> Model -> ( Model, Cmd Msg )
+updateEditor msg ({ editorState } as model) =
+    let
+        { project, timeline, todo } =
+            editorState
 
-        ( _, EditProject prj ) ->
-            { model | project = prj }
+        editorLens =
+            Lens .editorState (\v m -> { m | editorState = v })
 
-        ( Nothing, _ ) ->
-            model
+        getFirstTimeline : Maybe Project -> Maybe Timeline
+        getFirstTimeline prj =
+            prj
+                |> Maybe.andThen (\p -> Just p.timelines)
+                |> Maybe.andThen List.head
 
-        ( Just prj, SetProjectColor color ) ->
-            { model | project = Just { prj | color = color } }
+        getFirstTodo : Maybe Timeline -> Maybe Todo
+        getFirstTodo t =
+            t
+                |> Maybe.andThen (\td -> Just td.todos)
+                |> Maybe.andThen List.head
+    in
+    case msg of
+        Noop ->
+            ( model, Cmd.none )
 
-        ( Just prj, SetProjectComment comment ) ->
-            { model
-                | project =
-                    Just
-                        { prj
-                            | comment = comment
-                        }
-            }
+        EditProject prj ->
+            let
+                tl =
+                    getFirstTimeline prj
+            in
+            ( editorLens.set { editorState | project = prj, timeline = tl, todo = getFirstTodo tl } model, Cmd.none )
 
-        ( Just prj, SetProjectEnd date ) ->
-            { model | project = Just { prj | end = date } }
+        EditTimeline tl ->
+            ( editorLens.set { editorState | timeline = tl, todo = getFirstTodo tl } model, Cmd.none )
 
-        ( Just prj, SetProjectPeople people ) ->
-            { model | project = Just { prj | people = people } }
+        EditTodo t ->
+            ( editorLens.set { editorState | todo = t } model, Cmd.none )
 
-        ( Just prj, SetProjectStart date ) ->
-            { model | project = Just { prj | start = date } }
+        SetProjectColor color ->
+            ( editorLens.set { editorState | project = Maybe.andThen (\p -> Just { p | color = color }) project } model, Cmd.none )
 
-        ( Just prj, SetProjectTimelines timelines ) ->
-            { model | project = Just { prj | timelines = timelines } }
+        SetProjectComment comment ->
+            ( editorLens.set
+                { editorState
+                    | project = Maybe.andThen (\p -> Just { p | comment = comment }) project
+                }
+                model
+            , Cmd.none
+            )
 
-        ( Just prj, SetProjectTitle text ) ->
-            { model | project = Just { prj | title = text } }
+        SetProjectEnd date ->
+            ( editorLens.set { editorState | project = Maybe.andThen (\p -> Just { p | end = date }) project } model, Cmd.none )
+
+        SetProjectPeople people ->
+            ( editorLens.set { editorState | project = Maybe.andThen (\p -> Just { p | people = people }) project } model, Cmd.none )
+
+        SetProjectStart date ->
+            ( editorLens.set { editorState | project = Maybe.andThen (\p -> Just { p | start = date }) project } model, Cmd.none )
+
+        SetProjectTimelines timelines ->
+            ( editorLens.set { editorState | project = Maybe.andThen (\p -> Just { p | timelines = timelines }) project } model, Cmd.none )
+
+        SetProjectTitle text ->
+            ( editorLens.set { editorState | project = Maybe.andThen (\p -> Just { p | title = text }) project } model, Cmd.none )
 
 
 noHtml =
     text ""
+
+
+listFind : (a -> Bool) -> List a -> Maybe a
+listFind pred list =
+    list
+        |> List.filter pred
+        |> List.head
+
+
+getProject : List Project -> Int -> Maybe Project
+getProject projects id =
+    listFind (\p -> p.id == id) projects
+
+
+getTimeline : List Project -> Int -> Maybe Timeline
+getTimeline projects id =
+    projects
+        |> List.concatMap .timelines
+        |> listFind (\tl -> tl.id == id)
+
+
+getParentProject : List Project -> Timeline -> Maybe Project
+getParentProject projects timeline =
+    getProject projects timeline.parentProject
+
+
+getTodo : List Project -> Int -> Maybe Todo
+getTodo projects id =
+    projects
+        |> List.concatMap .timelines
+        |> List.concatMap .todos
+        |> listFind (\t -> t.id == id)
+
+
+getParentTimeline : List Project -> Todo -> Maybe Timeline
+getParentTimeline projects todo =
+    getTimeline projects todo.parentTimeline

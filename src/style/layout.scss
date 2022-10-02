@@ -33,3 +33,9 @@ body {
   overflow: auto;
   padding: var(--default-padding);
 }
+
+.project-editor {
+  .modal-content {
+    max-width: 80vw;
+  }
+}

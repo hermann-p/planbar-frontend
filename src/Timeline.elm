@@ -114,6 +114,7 @@ projectTimelineItem { timeline, today } day =
 
         cssClasses =
             [ ( baseClass, True )
+            , ( "hover-grow", day == duration.from || day == duration.to || hasEvent )
             , ( baseClass ++ "--today", day == today )
             , ( baseClass ++ "--active", isActive && not hasEvent )
             , ( baseClass ++ "--event", hasEvent )
