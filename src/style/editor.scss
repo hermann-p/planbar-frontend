@@ -1,0 +1,10 @@
+.project-editor {
+  &__timeline-list {
+    position: relative;
+  }
+  &__add-timeline-button {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  }
+}
