@@ -8,3 +8,28 @@
     right: 0;
   }
 }
+
+.editor-modal {
+  width: 40rem;
+
+  .modal-body {
+    height: 50rem;
+  }
+}
+
+.editor-view {
+  .accordion-header {
+    select.level-item {
+      flex: 1;
+    }
+  }
+  .accordion-body {
+    display: none;
+  }
+  input:checked.accordion-toggle {
+    background-color: yellow;
+    & ~ .accordion-body {
+      display: block;
+    }
+  }
+}

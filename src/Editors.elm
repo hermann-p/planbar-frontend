@@ -191,7 +191,7 @@ editorView ({ editorState } as model) =
 
         _ ->
             div [ class "modal shown" ]
-                [ div [ class "modal-content" ]
+                [ div [ class "modal-content editor-modal" ]
                     [ div [ class "modal-header bg-gray-100" ]
                         [ h5 []
                             [ -- text "Projekte bearbeiten"
@@ -200,24 +200,28 @@ editorView ({ editorState } as model) =
                         ]
                     , div [ class "modal-body" ]
                         [ section [ class "editor-view" ]
-                            [ div [ class "level" ]
-                                [ input [ type_ "checkbox", class "accordion-toggle" ] []
+                            [ input [ type_ "checkbox", class "accordion-toggle" ] []
+                            , div [ class "level accordion-header" ]
+                                [ text "Projekt"
                                 , projectSelector model
                                 ]
-                            , projectEditor editorState.project
+                            , div [ class "accordion-body" ] [ projectEditor editorState.project ]
                             ]
                         , section [ class "editor-view" ]
-                            [ div [ class "level" ]
-                                [ input [ type_ "checkbox", class "accordion-toggle" ] []
+                            [ input [ type_ "checkbox", class "accordion-toggle" ] []
+                            , div [ class "level accordion-header" ]
+                                [ text "Phase"
                                 , timelineSelector model
                                 ]
+                            , div [ class "accordion-body" ] [ timelineEditor editorState.timeline ]
                             ]
-                        , timelineEditor editorState.timeline
                         , section [ class "editor-view" ]
-                            [ div
-                                [ class "level" ]
-                                [ input [ type_ "checkbox", class "accordion-toggle" ] [], todoSelector model ]
-                            , todoEditor editorState.todo
+                            [ input [ type_ "checkbox", class "accordion-toggle" ] []
+                            , div [ class "level accordion-header" ]
+                                [ text "Aufgabe"
+                                , todoSelector model
+                                ]
+                            , div [ class "accordion-body" ] [ todoEditor editorState.todo ]
                             ]
                         ]
                     ]
