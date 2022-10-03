@@ -2,9 +2,9 @@ module Editors exposing (..)
 
 import Date exposing (Date)
 import Html exposing (Html, a, button, div, footer, form, h3, h5, h6, header, input, label, li, option, section, select, text, textarea, ul)
-import Html.Attributes exposing (class, for, id, selected, type_, value)
+import Html.Attributes exposing (checked, class, for, id, selected, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Project exposing (EditorMsg(..), Model, Msg(..), Person, Project, Timeline, Todo, getProject, getTimeline, noHtml)
+import Project exposing (EditorMsg(..), Model, Msg(..), Person, Project, Timeline, Todo, getProject, getTimeline, getTodo, noHtml)
 
 
 onDate : (Date -> EditorMsg) -> String -> Msg
@@ -61,10 +61,6 @@ projectEditor prj =
 
 timelineEditor : Maybe Timeline -> Html Msg
 timelineEditor tl =
-    let
-        _ =
-            Debug.log "selected timeline" tl
-    in
     case tl of
         Nothing ->
             noHtml
@@ -78,6 +74,10 @@ timelineEditor tl =
                 [ div []
                     [ label [ for "timeline-title" ] [ text "Name" ]
                     , input [ type_ "text", id "timeline-title", value timeline.title ] []
+                    ]
+                , div []
+                    [ label [ for "timeline-comment" ] [ text "Anmerkungen" ]
+                    , textarea [ id "timeline-comment", value comment ] []
                     ]
                 ]
 
@@ -94,15 +94,21 @@ todoEditor td =
                     [ label [ for "todo-title" ] [ text "Name" ]
                     , input [ type_ "text", id "todo-title", value todo.title ] []
                     ]
-                , div []
-                    [ label [ for "todo-date" ] [ text "Datum" ]
-                    , input [ type_ "date", for "todo-date" ] []
+                , div [ class "grid grid-cols-2 u-gap-2" ]
+                    [ div []
+                        [ label [ for "todo-date" ] [ text "Datum" ]
+                        , input [ type_ "date", id "todo-date", value (Date.toIsoString todo.date) ] []
+                        ]
+                    , div []
+                        [ label [ for "todo-done" ] [ text "Erledigt" ]
+                        , input [ type_ "checkbox", id "todo-done", checked todo.done ] []
+                        ]
                     ]
                 ]
 
 
 projectSelector : Model -> Html Msg
-projectSelector ({ projects, editorState } as model) =
+projectSelector ({ projects } as model) =
     let
         projectToOption : Project -> Html Msg
         projectToOption project =
@@ -150,51 +156,67 @@ timelineSelector model =
     select [ class "level-item", onInput selectTimeline ] (List.map tlToOption timelines)
 
 
-todoSelector : Maybe (List Todo) -> Maybe Todo -> Html Msg
-todoSelector todos todo =
-    text ""
+todoSelector : Model -> Html Msg
+todoSelector model =
+    let
+        todos =
+            model.editorState.timeline
+                |> Maybe.andThen (\tl -> Just tl.todos)
+                |> Maybe.withDefault []
+
+        todoToOption : Todo -> Html Msg
+        todoToOption todo =
+            option
+                [ value (String.fromInt todo.id)
+                , selected (todo.id == (Maybe.withDefault -1 <| Maybe.andThen (\td -> Just td.id) model.editorState.todo))
+                ]
+                [ text todo.title ]
+
+        selectTodo : String -> Msg
+        selectTodo id =
+            let
+                todo =
+                    getTodo model.projects (Maybe.withDefault -1 <| String.toInt id)
+            in
+            ProjectMsg <| EditTodo todo
+    in
+    select [ class "level-item", onInput selectTodo ] (List.map todoToOption todos)
 
 
 editorView : Model -> Html Msg
-editorView ({ projects, editorState } as model) =
+editorView ({ editorState } as model) =
     case ( editorState.project, editorState.timeline, editorState.todo ) of
         ( Nothing, Nothing, Nothing ) ->
             text ""
 
         _ ->
-            let
-                timelines : Maybe (List Timeline)
-                timelines =
-                    Maybe.andThen (\prj -> Just prj.timelines) editorState.project
-
-                todos : Maybe (List Todo)
-                todos =
-                    Maybe.andThen (\tl -> Just tl.todos) editorState.timeline
-            in
             div [ class "modal shown" ]
                 [ div [ class "modal-content" ]
                     [ div [ class "modal-header bg-gray-100" ]
                         [ h5 []
-                            [ text "Projekte bearbeiten"
-                            , button [ class "btn-close u-pull-right", onClick (ProjectMsg <| EditProject Nothing) ] []
+                            [ -- text "Projekte bearbeiten"
+                              button [ class "btn-close u-pull-right", onClick (ProjectMsg <| EditProject Nothing) ] []
                             ]
                         ]
                     , div [ class "modal-body" ]
                         [ section [ class "editor-view" ]
                             [ div [ class "level" ]
-                                [ input [ type_ "checkbox", id "edit-project-view" ] []
+                                [ input [ type_ "checkbox", class "accordion-toggle" ] []
                                 , projectSelector model
                                 ]
                             , projectEditor editorState.project
                             ]
                         , section [ class "editor-view" ]
-                            [ input [ type_ "checkbox", id "edit-timeline-view" ] []
-                            , label [ for "edit-timeline-view" ] [ timelineSelector model ]
-                            , timelineEditor editorState.timeline
+                            [ div [ class "level" ]
+                                [ input [ type_ "checkbox", class "accordion-toggle" ] []
+                                , timelineSelector model
+                                ]
                             ]
+                        , timelineEditor editorState.timeline
                         , section [ class "editor-view" ]
-                            [ input [ type_ "checkbox", id "edit-todo-view" ] []
-                            , label [ for "edit-todo-view" ] [ todoSelector todos editorState.todo ]
+                            [ div
+                                [ class "level" ]
+                                [ input [ type_ "checkbox", class "accordion-toggle" ] [], todoSelector model ]
                             , todoEditor editorState.todo
                             ]
                         ]
