@@ -24,12 +24,17 @@
     }
   }
   .accordion-body {
-    display: none;
+    transform: scaleY(0);
+    height: 0;
+    transition: transform 400ms ease-out, height 400ms;
+    transform-origin: top;
   }
   input:checked.accordion-toggle {
     background-color: yellow;
     & ~ .accordion-body {
-      display: block;
+      transform: scaleY(1);
+      box-sizing: border-box;
+      height: 100%;
     }
   }
 }
