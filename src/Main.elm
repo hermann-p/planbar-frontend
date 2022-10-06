@@ -1,11 +1,11 @@
 module Main exposing (..)
 
 import Browser exposing (Document)
-import Date exposing (Date)
-import Editors exposing (editorView, projectEditor)
+import Date
+import Editors exposing (editorView)
 import Fixtures
-import Html exposing (Html, aside, div, input, li, main_, nav, section, text, ul)
-import Html.Attributes exposing (class, classList, type_)
+import Html exposing (Html, aside, div, li, main_, nav, section, text, ul)
+import Html.Attributes exposing (class, classList)
 import Project exposing (..)
 import Task
 import Timeline exposing (timelineView)
@@ -46,7 +46,10 @@ getActivePage { page } =
 
 viewSidebar : Model -> Html Msg
 viewSidebar _ =
-    aside [ class "sidebar bg-dark text-light" ] [ text "I am a sidebar" ]
+    aside [ class "sidebar bg-dark text-light" ]
+        [ div [ class "icofont-fox icofont-5x" ] []
+        , text "I am a sidebar"
+        ]
 
 
 viewNavbar : Model -> Html Msg
