@@ -48,6 +48,8 @@ viewSidebar : Model -> Html Msg
 viewSidebar _ =
     aside [ class "sidebar bg-dark text-light" ]
         [ div [ class "icofont-fox icofont-5x" ] []
+
+        -- div [ class "icofont-bars icofont-rotate-90 icofont-5x" ] []
         , text "I am a sidebar"
         ]
 
@@ -112,16 +114,22 @@ initialState =
     in
     { page = WeekView initialDate
     , projects = Fixtures.projects
+    , timelines = List.concatMap .timelines Fixtures.projects
+    , todos =
+        Fixtures.projects
+            |> List.concatMap .timelines
+            |> List.concatMap .todos
     , today = initialDate
     , displayPeriod = { from = initialDate, to = initialDate }
     , editorState =
-        { project = Nothing
-        , timeline = Nothing
-        , todo = Nothing
+        { projectID = Nothing
+        , timelineID = Nothing
+        , todoID = Nothing
         }
     }
 
 
+now : Cmd Msg
 now =
     Task.perform (MainMsg << SetToday) Date.today
 

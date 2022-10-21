@@ -10,6 +10,21 @@ import Project exposing (..)
 import Time exposing (Weekday(..))
 
 
+toProjectTree : Model -> List Project
+toProjectTree model =
+    List.map
+        (\p ->
+            { p
+                | timelines =
+                    model.timelines
+                        |> List.filter (\tl -> tl.parentProject == p.id)
+                        |> List.map
+                            (\tl -> { tl | todos = List.filter (\todo -> todo.parentTimeline == tl.id) model.todos })
+            }
+        )
+        model.projects
+
+
 find : (a -> Bool) -> List a -> Maybe a
 find pred xs =
     List.filter pred xs |> List.head
@@ -172,7 +187,7 @@ projectView vt today days project =
 
 
 timelineView : { viewType : ViewType, duration : Duration } -> Model -> Html Msg
-timelineView { viewType, duration } { projects, today } =
+timelineView { viewType, duration } ({ today } as model) =
     let
         days =
             daysIn duration
@@ -192,6 +207,6 @@ timelineView { viewType, duration } { projects, today } =
     section [ class (baseClass ++ " " ++ viewClass) ]
         [ table [ class "timeline" ]
             [ timelineHeader viewType today days
-            , tbody [ class "timeline-body" ] (List.concatMap (projectView viewType today days) projects)
+            , tbody [ class "timeline-body" ] (List.concatMap (projectView viewType today days) (toProjectTree model))
             ]
         ]

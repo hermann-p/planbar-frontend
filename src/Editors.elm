@@ -1,10 +1,47 @@
 module Editors exposing (..)
 
 import Date exposing (Date)
-import Html exposing (Html, a, button, div, footer, form, h3, h5, h6, header, input, label, li, option, section, select, text, textarea, ul)
+import Html
+    exposing
+        ( Html
+        , a
+        , button
+        , div
+        , footer
+        , form
+        , h3
+        , h5
+        , h6
+        , header
+        , input
+        , label
+        , li
+        , option
+        , section
+        , select
+        , text
+        , textarea
+        , ul
+        )
 import Html.Attributes exposing (checked, class, for, id, selected, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Project exposing (EditorMsg(..), Model, Msg(..), Person, Project, Timeline, Todo, getProject, getTimeline, getTodo, noHtml)
+import Project
+    exposing
+        ( EditorMsg(..)
+        , Model
+        , Msg(..)
+        , Person
+        , Project
+        , Timeline
+        , Todo
+        , getProject
+        , getSelectedProject
+        , getSelectedTimeline
+        , getSelectedTodo
+        , getTimeline
+        , getTodo
+        , noHtml
+        )
 
 
 onDate : (Date -> EditorMsg) -> String -> Msg
@@ -114,7 +151,7 @@ projectSelector ({ projects } as model) =
         projectToOption project =
             option
                 [ value (String.fromInt project.id)
-                , selected (project.id == (Maybe.withDefault -1 <| Maybe.andThen (\p -> Just p.id) model.editorState.project))
+                , selected (project.id == (Maybe.withDefault -1 <| Maybe.andThen (\p -> Just p.id) <| getSelectedProject model))
                 ]
                 [ text project.title ]
 
@@ -122,7 +159,7 @@ projectSelector ({ projects } as model) =
         selectProject id =
             let
                 project =
-                    getProject projects (Maybe.withDefault -1 <| String.toInt id)
+                    getProject (Maybe.withDefault -1 <| String.toInt id) model
             in
             ProjectMsg <| EditProject project
     in
@@ -133,7 +170,7 @@ timelineSelector : Model -> Html Msg
 timelineSelector model =
     let
         timelines =
-            model.editorState.project
+            getSelectedProject model
                 |> Maybe.andThen (\p -> Just p.timelines)
                 |> Maybe.withDefault []
 
@@ -141,7 +178,7 @@ timelineSelector model =
         tlToOption timeline =
             option
                 [ value (String.fromInt timeline.id)
-                , selected (timeline.id == (Maybe.withDefault -1 <| Maybe.andThen (\tl -> Just tl.id) model.editorState.timeline))
+                , selected (timeline.id == Maybe.withDefault -1 model.editorState.timelineID)
                 ]
                 [ text timeline.title ]
 
@@ -149,7 +186,7 @@ timelineSelector model =
         selectTimeline id =
             let
                 timeline =
-                    getTimeline model.projects (Maybe.withDefault -1 <| String.toInt id)
+                    getTimeline (Maybe.withDefault -1 <| String.toInt id) model
             in
             ProjectMsg <| EditTimeline timeline
     in
@@ -160,7 +197,7 @@ todoSelector : Model -> Html Msg
 todoSelector model =
     let
         todos =
-            model.editorState.timeline
+            getSelectedTimeline model
                 |> Maybe.andThen (\tl -> Just tl.todos)
                 |> Maybe.withDefault []
 
@@ -168,7 +205,7 @@ todoSelector model =
         todoToOption todo =
             option
                 [ value (String.fromInt todo.id)
-                , selected (todo.id == (Maybe.withDefault -1 <| Maybe.andThen (\td -> Just td.id) model.editorState.todo))
+                , selected (todo.id == Maybe.withDefault -1 model.editorState.todoID)
                 ]
                 [ text todo.title ]
 
@@ -176,7 +213,7 @@ todoSelector model =
         selectTodo id =
             let
                 todo =
-                    getTodo model.projects (Maybe.withDefault -1 <| String.toInt id)
+                    getTodo (Maybe.withDefault -1 <| String.toInt id) model
             in
             ProjectMsg <| EditTodo todo
     in
@@ -185,7 +222,11 @@ todoSelector model =
 
 editorView : Model -> Html Msg
 editorView ({ editorState } as model) =
-    case ( editorState.project, editorState.timeline, editorState.todo ) of
+    let
+        { projectID, timelineID, todoID } =
+            editorState
+    in
+    case ( projectID, timelineID, todoID ) of
         ( Nothing, Nothing, Nothing ) ->
             text ""
 
@@ -205,7 +246,7 @@ editorView ({ editorState } as model) =
                                 [ text "Projekt"
                                 , projectSelector model
                                 ]
-                            , div [ class "accordion-body" ] [ projectEditor editorState.project ]
+                            , div [ class "accordion-body" ] [ projectEditor <| getSelectedProject model ]
                             ]
                         , section [ class "editor-view" ]
                             [ input [ type_ "checkbox", class "accordion-toggle" ] []
@@ -213,7 +254,7 @@ editorView ({ editorState } as model) =
                                 [ text "Phase"
                                 , timelineSelector model
                                 ]
-                            , div [ class "accordion-body" ] [ timelineEditor editorState.timeline ]
+                            , div [ class "accordion-body" ] [ timelineEditor <| getSelectedTimeline model ]
                             ]
                         , section [ class "editor-view" ]
                             [ input [ type_ "checkbox", class "accordion-toggle" ] []
@@ -221,7 +262,7 @@ editorView ({ editorState } as model) =
                                 [ text "Aufgabe"
                                 , todoSelector model
                                 ]
-                            , div [ class "accordion-body" ] [ todoEditor editorState.todo ]
+                            , div [ class "accordion-body" ] [ todoEditor <| getSelectedTodo model ]
                             ]
                         ]
                     ]
