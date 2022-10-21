@@ -134,6 +134,64 @@ type alias Model =
     , today : Date
     , displayPeriod : Duration
     , editorState : EditorModel
+    , dirty : Bool
+    }
+
+
+listLast : List a -> Maybe a
+listLast list =
+    case list of
+        [] ->
+            Nothing
+
+        x :: [] ->
+            Just x
+
+        x :: xs ->
+            listLast xs
+
+
+getNewId : List { a | id : number } -> number
+getNewId items =
+    listLast items
+        |> Maybe.map .id
+        |> Maybe.map (\n -> n + 1)
+        |> Maybe.withDefault 1
+
+
+createProject : Model -> Project
+createProject model =
+    { id = getNewId model.projects
+    , title = ""
+    , color = "#d00"
+    , comment = Nothing
+    , start = model.today
+    , end = model.today
+    , timelines = []
+    , people = []
+    }
+
+
+createTimeline : ProjectID -> Model -> Timeline
+createTimeline parentId model =
+    { id = getNewId model.timelines
+    , parentProject = parentId
+    , title = ""
+    , comment = Nothing
+    , people = []
+    , tags = []
+    , todos = []
+    }
+
+
+createTodo : TimelineID -> Model -> Todo
+createTodo parentId model =
+    { id = getNewId model.todos
+    , parentTimeline = parentId
+    , title = ""
+    , comment = Nothing
+    , date = model.today
+    , done = False
     }
 
 
@@ -169,6 +227,9 @@ type alias EditorModel =
 type MainMsg
     = SetActivePage Page
     | SetToday Date
+    | CreateProject
+    | CreateTimeline ProjectID
+    | CreateTodo TimelineID
 
 
 type Msg
@@ -211,17 +272,17 @@ listUpdateWhere pred f list =
 
 updateProject : Maybe ProjectID -> (Project -> Project) -> Model -> Model
 updateProject id f model =
-    { model | projects = listUpdateWhere (\p -> p.id == Maybe.withDefault -1 id) f model.projects }
+    { model | projects = listUpdateWhere (\p -> p.id == Maybe.withDefault -1 id) f model.projects, dirty = True }
 
 
 updateTimeline : Maybe TimelineID -> (Timeline -> Timeline) -> Model -> Model
 updateTimeline id f model =
-    { model | timelines = listUpdateWhere (\t -> t.id == Maybe.withDefault -1 id) f model.timelines }
+    { model | timelines = listUpdateWhere (\t -> t.id == Maybe.withDefault -1 id) f model.timelines, dirty = True }
 
 
 updateTodo : Maybe TodoID -> (Todo -> Todo) -> Model -> Model
 updateTodo id f model =
-    { model | todos = listUpdateWhere (\t -> t.id == Maybe.withDefault -1 id) f model.todos }
+    { model | todos = listUpdateWhere (\t -> t.id == Maybe.withDefault -1 id) f model.todos, dirty = True }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -255,6 +316,21 @@ update msg ({ page } as model) =
 
                 ( SetToday date, _ ) ->
                     ( { model | today = date, displayPeriod = getInitialDuration Month date }, Cmd.none )
+
+                ( CreateProject, _ ) ->
+                    let
+                        project =
+                            createProject model
+                    in
+                    update
+                        (ProjectMsg <| EditProject <| Just project)
+                        { model | projects = List.append model.projects [ project ] }
+
+                ( CreateTimeline parentId, _ ) ->
+                    ( { model | timelines = List.append model.timelines [ createTimeline parentId model ], dirty = True }, Cmd.none )
+
+                ( CreateTodo parentId, _ ) ->
+                    ( { model | todos = List.append model.todos [ createTodo parentId model ], dirty = True }, Cmd.none )
 
         ProjectMsg projectMsg ->
             updateEditor projectMsg model

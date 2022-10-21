@@ -126,6 +126,7 @@ initialState =
         , timelineID = Nothing
         , todoID = Nothing
         }
+    , dirty = False
     }
 
 
