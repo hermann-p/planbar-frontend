@@ -1,6 +1,7 @@
 $col-width-week: 60px;
 $col-width-project-header: 120px;
 $color-bg-today: beige;
+$todo-item-size: 25px;
 
 .timeline-view {
   overflow: auto;
@@ -62,5 +63,22 @@ $color-bg-today: beige;
   &__indicator {
     padding: 5px 0;
     background-color: red;
+  }
+
+  .timeline-event {
+    width: $todo-item-size;
+    height: $todo-item-size;
+    border: 2px solid transparent;
+    border-radius: 50%;
+
+    &__container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &--done {
+      background-color: red;
+    }
   }
 }

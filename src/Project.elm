@@ -303,15 +303,31 @@ updateEditor msg ({ editorState } as model) =
         EditTimeline tl ->
             ( editorLens.set
                 { editorState
-                    | timelineID = Maybe.map .id tl
+                    | projectID = Maybe.andThen (\t -> getParentProject t model) tl |> Maybe.map .id
+                    , timelineID = Maybe.map .id tl
                     , todoID = Maybe.map .id <| getFirstTodo tl
                 }
                 model
             , Cmd.none
             )
 
-        EditTodo t ->
-            ( editorLens.set { editorState | todoID = Maybe.map .id t } model, Cmd.none )
+        EditTodo todo ->
+            let
+                timeline =
+                    Maybe.andThen (\t -> getParentTimeline t model) todo
+
+                project =
+                    Maybe.andThen (\t -> getParentProject t model) timeline
+            in
+            ( editorLens.set
+                { editorState
+                    | projectID = Maybe.map .id project
+                    , timelineID = Maybe.map .id timeline
+                    , todoID = Maybe.map .id todo
+                }
+                model
+            , Cmd.none
+            )
 
         SetProjectColor color ->
             ( updateProject projectID (\p -> { p | color = color }) model, Cmd.none )

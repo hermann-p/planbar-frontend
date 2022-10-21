@@ -91,9 +91,20 @@ timelineHeader viewtype today days =
 
 timelineEventItem : Maybe Todo -> Html Msg
 timelineEventItem todo =
+    let
+        baseName =
+            "timeline-event"
+    in
     case todo of
         Just event ->
-            text event.title
+            div
+                [ class (baseName ++ "__container") ]
+                [ div
+                    [ classList [ ( baseName, True ), ( baseName ++ "--done", event.done ) ]
+                    , onClick (ProjectMsg (EditTodo todo))
+                    ]
+                    []
+                ]
 
         Nothing ->
             div [] []
@@ -142,7 +153,12 @@ projectTimelineItem { timeline, today } day =
             [ timelineEventItem event ]
 
          else if isActive then
-            [ div [ class (baseClass ++ "__indicator") ] [] ]
+            [ div
+                [ class (baseClass ++ "__indicator hover-grow")
+                , onClick (ProjectMsg (EditTimeline <| Just timeline))
+                ]
+                []
+            ]
 
          else
             []
