@@ -24,7 +24,7 @@ import Html
         , ul
         )
 import Html.Attributes exposing (checked, class, for, id, selected, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onCheck, onClick, onInput)
 import Project
     exposing
         ( EditorMsg(..)
@@ -110,11 +110,17 @@ timelineEditor tl =
             form []
                 [ div []
                     [ label [ for "timeline-title" ] [ text "Name" ]
-                    , input [ type_ "text", id "timeline-title", value timeline.title ] []
+                    , input
+                        [ type_ "text"
+                        , id "timeline-title"
+                        , value timeline.title
+                        , onInput <| ProjectMsg << SetTimelineTitle
+                        ]
+                        []
                     ]
                 , div []
                     [ label [ for "timeline-comment" ] [ text "Anmerkungen" ]
-                    , textarea [ id "timeline-comment", value comment ] []
+                    , textarea [ id "timeline-comment", value comment, onInput <| ProjectMsg << SetTimelineComment ] []
                     ]
                 ]
 
@@ -129,16 +135,22 @@ todoEditor td =
             form []
                 [ div []
                     [ label [ for "todo-title" ] [ text "Name" ]
-                    , input [ type_ "text", id "todo-title", value todo.title ] []
+                    , input [ type_ "text", id "todo-title", value todo.title, onInput <| ProjectMsg << SetTodoTitle ] []
                     ]
                 , div [ class "grid grid-cols-2 u-gap-2" ]
                     [ div []
                         [ label [ for "todo-date" ] [ text "Datum" ]
-                        , input [ type_ "date", id "todo-date", value (Date.toIsoString todo.date) ] []
+                        , input
+                            [ type_ "date"
+                            , id "todo-date"
+                            , value (Date.toIsoString todo.date)
+                            , onInput (onDate SetTodoDate)
+                            ]
+                            []
                         ]
                     , div []
                         [ label [ for "todo-done" ] [ text "Erledigt" ]
-                        , input [ type_ "checkbox", id "todo-done", checked todo.done ] []
+                        , input [ type_ "checkbox", id "todo-done", checked todo.done, onCheck <| ProjectMsg << SetTodoDone ] []
                         ]
                     ]
                 ]

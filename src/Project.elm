@@ -148,6 +148,11 @@ type EditorMsg
     | SetProjectEnd Date
     | SetProjectPeople (List Person)
     | SetProjectComment (Maybe String)
+    | SetTimelineTitle String
+    | SetTimelineComment String
+    | SetTodoDate Date
+    | SetTodoTitle String
+    | SetTodoDone Bool
     | EditProject (Maybe Project)
     | EditTimeline (Maybe Timeline)
     | EditTodo (Maybe Todo)
@@ -325,6 +330,21 @@ updateEditor msg ({ editorState } as model) =
 
         SetProjectTitle title ->
             ( updateProject projectID (\p -> { p | title = title }) model, Cmd.none )
+
+        SetTimelineTitle title ->
+            ( updateTimeline timelineID (\t -> { t | title = title }) model, Cmd.none )
+
+        SetTimelineComment text ->
+            ( updateTimeline timelineID (\t -> { t | comment = Just text }) model, Cmd.none )
+
+        SetTodoDate date ->
+            ( updateTodo todoID (\t -> { t | date = date }) model, Cmd.none )
+
+        SetTodoTitle title ->
+            ( updateTodo todoID (\t -> { t | title = title }) model, Cmd.none )
+
+        SetTodoDone done ->
+            ( updateTodo todoID (\t -> { t | done = done }) model, Cmd.none )
 
 
 noHtml : Html msg
