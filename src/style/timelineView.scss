@@ -62,7 +62,6 @@ $todo-item-size: 25px;
 
   &__indicator {
     padding: 5px 0;
-    background-color: red;
   }
 
   .timeline-event {
@@ -78,7 +77,6 @@ $todo-item-size: 25px;
     }
 
     &--done {
-      background-color: red;
     }
   }
 }

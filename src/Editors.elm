@@ -62,6 +62,9 @@ projectEditor prj =
 
         Just project ->
             let
+                _ =
+                    Debug.log "color" project.color
+
                 setComment : String -> Msg
                 setComment text =
                     if String.length text == 0 then

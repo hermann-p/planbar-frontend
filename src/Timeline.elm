@@ -4,7 +4,7 @@ import Calendar
 import Date exposing (Date)
 import DateFormat exposing (de)
 import Html exposing (Html, div, section, table, tbody, td, text, thead, tr)
-import Html.Attributes exposing (class, classList, rowspan)
+import Html.Attributes exposing (class, classList, rowspan, style)
 import Html.Events exposing (onClick)
 import Project exposing (..)
 import Time exposing (Weekday(..))
@@ -89,8 +89,8 @@ timelineHeader viewtype today days =
         ]
 
 
-timelineEventItem : Maybe Todo -> Html Msg
-timelineEventItem todo =
+timelineEventItem : Project -> Maybe Todo -> Html Msg
+timelineEventItem { color } todo =
     let
         baseName =
             "timeline-event"
@@ -101,6 +101,7 @@ timelineEventItem todo =
                 [ class (baseName ++ "__container") ]
                 [ div
                     [ classList [ ( baseName, True ), ( baseName ++ "--done", event.done ) ]
+                    , style "background-color" color
                     , onClick (ProjectMsg (EditTodo todo))
                     ]
                     []
@@ -120,8 +121,8 @@ isJust m =
             True
 
 
-projectTimelineItem : { timeline : Timeline, today : Date } -> Date -> Html Msg
-projectTimelineItem { timeline, today } day =
+projectTimelineItem : { timeline : Timeline, today : Date, project : Project } -> Date -> Html Msg
+projectTimelineItem { timeline, today, project } day =
     let
         duration =
             durationFromTimeline timeline
@@ -150,11 +151,12 @@ projectTimelineItem { timeline, today } day =
     in
     td [ classList cssClasses ]
         (if hasEvent then
-            [ timelineEventItem event ]
+            [ timelineEventItem project event ]
 
          else if isActive then
             [ div
                 [ class (baseClass ++ "__indicator hover-grow")
+                , style "background-color" project.color
                 , onClick (ProjectMsg (EditTimeline <| Just timeline))
                 ]
                 []
@@ -172,7 +174,7 @@ projectTimeline { days, project, today } timeline idx =
             "project-timeline"
 
         timelineItems =
-            List.map (projectTimelineItem { timeline = timeline, today = today }) days
+            List.map (projectTimelineItem { timeline = timeline, today = today, project = project }) days
     in
     tr [ class baseClass ]
         (if idx == 0 then
@@ -223,6 +225,7 @@ timelineView { viewType, duration } ({ today } as model) =
     section [ class (baseClass ++ " " ++ viewClass) ]
         [ table [ class "timeline" ]
             [ timelineHeader viewType today days
-            , tbody [ class "timeline-body" ] (List.concatMap (projectView viewType today days) (toProjectTree model))
+            , tbody [ class "timeline-body" ]
+                (List.concatMap (projectView viewType today days) (toProjectTree model))
             ]
         ]
