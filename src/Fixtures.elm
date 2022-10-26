@@ -7,7 +7,7 @@ import Project exposing (Project, Timeline)
 projects : List Project
 projects =
     [ { id = 1
-      , color = "#2ec27e"
+      , color = "#ff7e00"
       , comment = Nothing
       , start = Date.fromRataDie 738415
       , end = Date.fromRataDie 738499
