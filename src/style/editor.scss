@@ -1,40 +1,18 @@
-.project-editor {
-  &__timeline-list {
-    position: relative;
-  }
-  &__add-timeline-button {
-    position: absolute;
-    bottom: 0;
+.editor-wrapper {
+  position: fixed;
+  width: 60vw;
+  top: 0;
+  bottom: 0;
+  right: -100%;
+  transition: right 300ms ease-in-out;
+  z-index: 1;
+
+  &--open {
     right: 0;
+    box-shadow: 0 0 8px 0 black;
   }
 }
 
-.editor-modal {
-  width: 40rem;
-
-  .modal-body {
-    height: 50rem;
-  }
-}
-
-.editor-view {
-  .accordion-header {
-    select.level-item {
-      flex: 1;
-    }
-  }
-  .accordion-body {
-    transform: scaleY(0);
-    height: 0;
-    transition: transform 400ms ease-out, height 400ms;
-    transform-origin: top;
-  }
-  input:checked.accordion-toggle {
-    background-color: yellow;
-    & ~ .accordion-body {
-      transform: scaleY(1);
-      box-sizing: border-box;
-      height: 100%;
-    }
-  }
+.editor-content {
+  max-height: 100vh;
 }

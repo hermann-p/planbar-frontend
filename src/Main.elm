@@ -46,7 +46,7 @@ getActivePage { page } =
 
 viewSidebar : Model -> Html Msg
 viewSidebar _ =
-    aside [ class "sidebar bg-dark text-light" ]
+    aside [ class "sidebar bg-green-800 text-light" ]
         [ div [ class "icofont-fox icofont-5x" ] []
 
         -- div [ class "icofont-bars icofont-rotate-90 icofont-5x" ] []

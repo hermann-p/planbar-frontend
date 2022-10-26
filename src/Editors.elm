@@ -7,33 +7,33 @@ import Html
         , a
         , button
         , div
-        , footer
         , form
-        , h3
         , h5
-        , h6
-        , header
+        , i
         , input
         , label
         , li
         , option
         , section
         , select
+        , span
         , text
         , textarea
         , ul
         )
-import Html.Attributes exposing (checked, class, for, id, selected, type_, value)
+import Html.Attributes exposing (checked, class, classList, for, href, id, selected, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Project
     exposing
         ( EditorMsg(..)
         , Model
         , Msg(..)
-        , Person
         , Project
+        , ProjectID
         , Timeline
+        , TimelineID
         , Todo
+        , TodoID
         , getProject
         , getSelectedProject
         , getSelectedTimeline
@@ -62,9 +62,6 @@ projectEditor prj =
 
         Just project ->
             let
-                _ =
-                    Debug.log "color" project.color
-
                 setComment : String -> Msg
                 setComment text =
                     if String.length text == 0 then
@@ -162,23 +159,10 @@ todoEditor td =
 projectSelector : Model -> Html Msg
 projectSelector ({ projects } as model) =
     let
-        projectToOption : Project -> Html Msg
-        projectToOption project =
-            option
-                [ value (String.fromInt project.id)
-                , selected (project.id == (Maybe.withDefault -1 <| Maybe.andThen (\p -> Just p.id) <| getSelectedProject model))
-                ]
-                [ text project.title ]
-
-        selectProject : String -> Msg
-        selectProject id =
-            let
-                project =
-                    getProject (Maybe.withDefault -1 <| String.toInt id) model
-            in
-            ProjectMsg <| EditProject project
+        selectProject project =
+            ProjectMsg (EditProject (Just project))
     in
-    select [ class "level-item", onInput selectProject ] (List.map projectToOption projects)
+    buttonSelector "Projekt" selectProject (getSelectedProject model) projects
 
 
 timelineSelector : Model -> Html Msg
@@ -189,23 +173,10 @@ timelineSelector model =
                 |> Maybe.andThen (\p -> Just p.timelines)
                 |> Maybe.withDefault []
 
-        tlToOption : Timeline -> Html Msg
-        tlToOption timeline =
-            option
-                [ value (String.fromInt timeline.id)
-                , selected (timeline.id == Maybe.withDefault -1 model.editorState.timelineID)
-                ]
-                [ text timeline.title ]
-
-        selectTimeline : String -> Msg
-        selectTimeline id =
-            let
-                timeline =
-                    getTimeline (Maybe.withDefault -1 <| String.toInt id) model
-            in
-            ProjectMsg <| EditTimeline timeline
+        selectTimeline timeline =
+            ProjectMsg (EditTimeline (Just timeline))
     in
-    select [ class "level-item", onInput selectTimeline ] (List.map tlToOption timelines)
+    buttonSelector "Phase" selectTimeline (getSelectedTimeline model) timelines
 
 
 todoSelector : Model -> Html Msg
@@ -216,23 +187,61 @@ todoSelector model =
                 |> Maybe.andThen (\tl -> Just tl.todos)
                 |> Maybe.withDefault []
 
-        todoToOption : Todo -> Html Msg
-        todoToOption todo =
-            option
-                [ value (String.fromInt todo.id)
-                , selected (todo.id == Maybe.withDefault -1 model.editorState.todoID)
-                ]
-                [ text todo.title ]
-
-        selectTodo : String -> Msg
-        selectTodo id =
-            let
-                todo =
-                    getTodo (Maybe.withDefault -1 <| String.toInt id) model
-            in
-            ProjectMsg <| EditTodo todo
+        selectTodo todo =
+            ProjectMsg (EditTodo (Just todo))
     in
-    select [ class "level-item", onInput selectTodo ] (List.map todoToOption todos)
+    buttonSelector "Aufgabe" selectTodo (getSelectedTodo model) todos
+
+
+buttonSelector :
+    String
+    -> ({ x | id : number, title : String } -> Msg)
+    -> Maybe { x | id : number, title : String }
+    -> List { x | id : number, title : String }
+    -> Html Msg
+buttonSelector prefix handleClick selectedItem items =
+    let
+        fullWidth =
+            style "width" "100%"
+
+        buttonTitle =
+            case selectedItem of
+                Just item ->
+                    prefix ++ ": " ++ item.title
+
+                _ ->
+                    prefix
+
+        toOption : { x | id : number, title : String } -> Html Msg
+        toOption item =
+            li [ class "menu-item" ]
+                [ a [ href "#", onClick (handleClick item) ]
+                    [ text item.title ]
+                ]
+    in
+    div
+        [ class "list-dropdown", fullWidth ]
+        [ button [ class "btn-success btn-dropdown m-0", fullWidth ]
+            [ span [] [ text buttonTitle ]
+            , i [ class "icofont-caret-down" ] []
+            ]
+        , ul [ class "menu", fullWidth ] (List.map toOption items)
+        ]
+
+
+type EditorView
+    = EditorClosed
+    | EditorOpen ProjectID TimelineID TodoID
+
+
+editorCard : String -> Html Msg -> Html Msg -> Html Msg
+editorCard title selector editor =
+    section [ class "frame" ]
+        [ div [ class "frame__header" ]
+            [ selector
+            ]
+        , div [ class "frame__body p-2" ] [ editor ]
+        ]
 
 
 editorView : Model -> Html Msg
@@ -240,45 +249,42 @@ editorView ({ editorState } as model) =
     let
         { projectID, timelineID, todoID } =
             editorState
-    in
-    case ( projectID, timelineID, todoID ) of
-        ( Nothing, Nothing, Nothing ) ->
-            text ""
 
-        _ ->
-            div [ class "modal shown" ]
-                [ div [ class "modal-content editor-modal" ]
-                    [ div [ class "modal-header bg-gray-100" ]
-                        [ h5 []
-                            [ -- text "Projekte bearbeiten"
-                              button [ class "btn-close u-pull-right", onClick (ProjectMsg <| EditProject Nothing) ] []
-                            ]
-                        ]
-                    , div [ class "modal-body" ]
-                        [ section [ class "editor-view" ]
-                            [ input [ type_ "checkbox", class "accordion-toggle" ] []
-                            , div [ class "level accordion-header" ]
-                                [ text "Projekt"
-                                , projectSelector model
-                                ]
-                            , div [ class "accordion-body" ] [ projectEditor <| getSelectedProject model ]
-                            ]
-                        , section [ class "editor-view" ]
-                            [ input [ type_ "checkbox", class "accordion-toggle" ] []
-                            , div [ class "level accordion-header" ]
-                                [ text "Phase"
-                                , timelineSelector model
-                                ]
-                            , div [ class "accordion-body" ] [ timelineEditor <| getSelectedTimeline model ]
-                            ]
-                        , section [ class "editor-view" ]
-                            [ input [ type_ "checkbox", class "accordion-toggle" ] []
-                            , div [ class "level accordion-header" ]
-                                [ text "Aufgabe"
-                                , todoSelector model
-                                ]
-                            , div [ class "accordion-body" ] [ todoEditor <| getSelectedTodo model ]
-                            ]
-                        ]
+        state =
+            case ( projectID, timelineID, todoID ) of
+                ( Just pid, Just tid, Just todoid ) ->
+                    EditorOpen pid tid todoid
+
+                _ ->
+                    EditorClosed
+
+        baseClass =
+            "editor-wrapper"
+    in
+    div
+        [ classList
+            [ ( baseClass ++ " bg-green-100 text-dark", True )
+            , ( baseClass ++ "--open", state /= EditorClosed )
+            ]
+        ]
+        [ div [ class "editor-content frame" ]
+            [ div [ class "frame__header level" ]
+                [ button
+                    [ class "btn-transparent icofont-close-line icofont-2x  level-item"
+                    , onClick (ProjectMsg <| EditProject Nothing)
+                    ]
+                    []
+                , h5 [ class "frame__title level-item" ]
+                    [ text "Projekte bearbeiten"
                     ]
                 ]
+            , div [ class "frame__body" ]
+                [ div
+                    []
+                    [ editorCard "Project" (projectSelector model) (projectEditor <| getSelectedProject model)
+                    , editorCard "Phase" (timelineSelector model) (timelineEditor <| getSelectedTimeline model)
+                    , editorCard "Aufgabe" (todoSelector model) (todoEditor <| getSelectedTodo model)
+                    ]
+                ]
+            ]
+        ]
