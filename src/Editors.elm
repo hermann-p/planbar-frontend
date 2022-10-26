@@ -168,9 +168,12 @@ projectSelector ({ projects } as model) =
 timelineSelector : Model -> Html Msg
 timelineSelector model =
     let
+        isChildOf project timeline =
+            timeline.parentProject == project.id
+
         timelines =
             getSelectedProject model
-                |> Maybe.andThen (\p -> Just p.timelines)
+                |> Maybe.map (\p -> List.filter (isChildOf p) model.timelines)
                 |> Maybe.withDefault []
 
         selectTimeline timeline =
@@ -182,9 +185,12 @@ timelineSelector model =
 todoSelector : Model -> Html Msg
 todoSelector model =
     let
+        isChildOf timeline todo =
+            todo.parentTimeline == timeline.id
+
         todos =
             getSelectedTimeline model
-                |> Maybe.andThen (\tl -> Just tl.todos)
+                |> Maybe.map (\tl -> List.filter (isChildOf tl) model.todos)
                 |> Maybe.withDefault []
 
         selectTodo todo =
@@ -235,7 +241,7 @@ type EditorView
 
 
 editorCard : String -> Html Msg -> Html Msg -> Html Msg
-editorCard title selector editor =
+editorCard _ selector editor =
     section [ class "frame" ]
         [ div [ class "frame__header" ]
             [ selector
