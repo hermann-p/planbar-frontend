@@ -5,12 +5,15 @@
   "main": "index.js",
   "scripts": {
     "build:styles": "sass --style=compressed --no-source-map src/style/main.scss:www/style.css",
-    "dev": "sass --watch src/style/main.scss:www/style.css & elm-go --host 0.0.0.0 --port 8001 src/Main.elm --dir=./www -- --output=www/elm.js"
+    "dev-app": "elm-go --host 0.0.0.0 --port 8001 src/Main.elm --dir=./www -- --output=www/elm.js",
+    "dev-css": "sass --watch src/style/main.scss:www/style.css",
+    "dev": "concurrently \"npm:dev-app\" \"npm:dev-css\""
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "cirrus-ui": "^0.7.0-patch.1",
+    "concurrently": "^7.5.0",
     "elm": "^0.19.1-5",
     "elm-format": "^0.8.5",
     "sass": "^1.54.5"
