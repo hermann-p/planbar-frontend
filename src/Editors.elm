@@ -13,15 +13,13 @@ import Html
         , input
         , label
         , li
-        , option
         , section
-        , select
         , span
         , text
         , textarea
         , ul
         )
-import Html.Attributes exposing (checked, class, classList, for, href, id, selected, style, type_, value)
+import Html.Attributes exposing (checked, class, classList, for, href, id, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Project
     exposing
@@ -34,12 +32,9 @@ import Project
         , TimelineID
         , Todo
         , TodoID
-        , getProject
         , getSelectedProject
         , getSelectedTimeline
         , getSelectedTodo
-        , getTimeline
-        , getTodo
         , noHtml
         )
 
