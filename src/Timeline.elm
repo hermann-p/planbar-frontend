@@ -3,7 +3,7 @@ module Timeline exposing (..)
 import Calendar
 import Date exposing (Date)
 import DateFormat exposing (de)
-import Html exposing (Html, div, section, table, tbody, td, text, thead, tr)
+import Html exposing (Html, div, i, section, table, tbody, td, text, thead, tr)
 import Html.Attributes exposing (class, classList, rowspan, style)
 import Html.Events exposing (onClick)
 import Project exposing (..)
@@ -101,10 +101,16 @@ timelineEventItem { color } todo =
                 [ class (baseName ++ "__container") ]
                 [ div
                     [ classList [ ( baseName, True ), ( baseName ++ "--done", event.done ) ]
-                    , style "background-color" color
+                    , style "border-color" color
+                    , style "color" color
                     , onClick (ProjectMsg (EditTodo todo))
                     ]
-                    []
+                    (if event.done then
+                        [ i [ class "icofont-ui-check" ] [] ]
+
+                     else
+                        []
+                    )
                 ]
 
         Nothing ->
@@ -196,7 +202,7 @@ projectViewHeader project =
 
 
 projectView : ViewType -> Date -> List Date -> Project -> List (Html Msg)
-projectView vt today days project =
+projectView _ today days project =
     let
         indices =
             List.range 0 <| List.length project.timelines

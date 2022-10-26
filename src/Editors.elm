@@ -24,6 +24,7 @@ import Html.Events exposing (onCheck, onClick, onInput)
 import Project
     exposing
         ( EditorMsg(..)
+        , MainMsg(..)
         , Model
         , Msg(..)
         , Project
@@ -151,16 +152,18 @@ todoEditor td =
                 ]
 
 
-projectSelector : Model -> Html Msg
+projectSelector : Model -> List (Html Msg)
 projectSelector ({ projects } as model) =
     let
         selectProject project =
             ProjectMsg (EditProject (Just project))
     in
-    buttonSelector "Projekt" selectProject (getSelectedProject model) projects
+    [ buttonSelector "Projekt" selectProject (getSelectedProject model) projects
+    , actionButton iconCreate (\_ -> MainMsg CreateProject)
+    ]
 
 
-timelineSelector : Model -> Html Msg
+timelineSelector : Model -> List (Html Msg)
 timelineSelector model =
     let
         isChildOf project timeline =
@@ -173,11 +176,38 @@ timelineSelector model =
 
         selectTimeline timeline =
             ProjectMsg (EditTimeline (Just timeline))
+
+        onCreate _ =
+            getSelectedProject model
+                |> Maybe.map (\p -> MainMsg (CreateTimeline p.id))
+                |> Maybe.withDefault (ProjectMsg Noop)
     in
-    buttonSelector "Phase" selectTimeline (getSelectedTimeline model) timelines
+    [ buttonSelector "Phase" selectTimeline (getSelectedTimeline model) timelines
+    , actionButton iconCreate onCreate
+    ]
 
 
-todoSelector : Model -> Html Msg
+type Icon
+    = Icon String
+
+
+iconDelete : Icon
+iconDelete =
+    Icon "icofont-trash"
+
+
+iconCreate : Icon
+iconCreate =
+    Icon "icofont-plus"
+
+
+actionButton : Icon -> (() -> Msg) -> Html Msg
+actionButton (Icon iconName) handleClick =
+    button [ class "btn-transparent", onClick (handleClick ()) ]
+        [ i [ class iconName ] [] ]
+
+
+todoSelector : Model -> List (Html Msg)
 todoSelector model =
     let
         isChildOf timeline todo =
@@ -190,38 +220,52 @@ todoSelector model =
 
         selectTodo todo =
             ProjectMsg (EditTodo (Just todo))
+
+        onCreate _ =
+            getSelectedTimeline model
+                |> Maybe.map (\tl -> MainMsg (CreateTodo tl.id))
+                |> Maybe.withDefault (ProjectMsg Noop)
     in
-    buttonSelector "Aufgabe" selectTodo (getSelectedTodo model) todos
+    [ buttonSelector "Aufgabe" selectTodo (getSelectedTodo model) todos
+    , actionButton iconCreate onCreate
+    ]
 
 
-buttonSelector :
-    String
-    -> ({ x | id : number, title : String } -> Msg)
-    -> Maybe { x | id : number, title : String }
-    -> List { x | id : number, title : String }
-    -> Html Msg
+type alias Item x =
+    { x | id : Int, title : String }
+
+
+buttonSelector : String -> (Item x -> Msg) -> Maybe (Item x) -> List (Item x) -> Html Msg
 buttonSelector prefix handleClick selectedItem items =
     let
         fullWidth =
             style "width" "100%"
 
+        itemTitle : Item x -> String
+        itemTitle item =
+            if item.title == "" then
+                "#" ++ String.fromInt item.id
+
+            else
+                item.title
+
         buttonTitle =
             case selectedItem of
                 Just item ->
-                    prefix ++ ": " ++ item.title
+                    prefix ++ ": " ++ itemTitle item
 
                 _ ->
                     prefix
 
-        toOption : { x | id : number, title : String } -> Html Msg
+        toOption : Item x -> Html Msg
         toOption item =
             li [ class "menu-item" ]
                 [ a [ href "#", onClick (handleClick item) ]
-                    [ text item.title ]
+                    [ text <| itemTitle item ]
                 ]
     in
     div
-        [ class "list-dropdown", fullWidth ]
+        [ class "list-dropdown", style "flex" "1" ]
         [ button [ class "btn-success btn-dropdown m-0", fullWidth ]
             [ span [] [ text buttonTitle ]
             , i [ class "icofont-caret-down" ] []
@@ -232,15 +276,14 @@ buttonSelector prefix handleClick selectedItem items =
 
 type EditorView
     = EditorClosed
-    | EditorOpen ProjectID TimelineID TodoID
+    | EditorOpen ProjectID (Maybe TimelineID) (Maybe TodoID)
 
 
-editorCard : String -> Html Msg -> Html Msg -> Html Msg
-editorCard _ selector editor =
+editorCard : String -> List (Html Msg) -> Html Msg -> Html Msg
+editorCard _ children editor =
     section [ class "frame" ]
-        [ div [ class "frame__header" ]
-            [ selector
-            ]
+        [ div [ class "frame__header editor-card__header" ]
+            children
         , div [ class "frame__body p-2" ] [ editor ]
         ]
 
@@ -252,9 +295,9 @@ editorView ({ editorState } as model) =
             editorState
 
         state =
-            case ( projectID, timelineID, todoID ) of
-                ( Just pid, Just tid, Just todoid ) ->
-                    EditorOpen pid tid todoid
+            case projectID of
+                Just pid ->
+                    EditorOpen pid timelineID todoID
 
                 _ ->
                     EditorClosed

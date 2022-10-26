@@ -79,7 +79,7 @@ viewMainContent : Model -> Html Msg
 viewMainContent ({ page, displayPeriod } as model) =
     main_ [ class "main-content" ]
         [ case page of
-            WeekView date ->
+            WeekView _ ->
                 timelineView { viewType = Week, duration = displayPeriod } model
 
             _ ->
@@ -142,6 +142,6 @@ main =
         , subscriptions = subscriptions
         , update = update
         , view = view
-        , onUrlChange = \_ -> Debug.todo "handle URL change"
-        , onUrlRequest = \_ -> Debug.todo "handle URL request"
+        , onUrlChange = \_ -> ProjectMsg Noop
+        , onUrlRequest = \_ -> ProjectMsg Noop
         }

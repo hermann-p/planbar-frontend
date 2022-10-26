@@ -147,7 +147,7 @@ listLast list =
         x :: [] ->
             Just x
 
-        x :: xs ->
+        _ :: xs ->
             listLast xs
 
 
@@ -163,7 +163,7 @@ createProject : Model -> Project
 createProject model =
     { id = getNewId model.projects
     , title = ""
-    , color = "#d00"
+    , color = "#dd0000"
     , comment = Nothing
     , start = model.today
     , end = model.today
@@ -321,16 +321,34 @@ update msg ({ page } as model) =
                     let
                         project =
                             createProject model
+
+                        timeline =
+                            createTimeline project.id { model | projects = List.append model.projects [ project ] }
                     in
                     update
-                        (ProjectMsg <| EditProject <| Just project)
-                        { model | projects = List.append model.projects [ project ] }
+                        (ProjectMsg <| EditTimeline <| Just timeline)
+                        { model
+                            | projects = List.append model.projects [ project ]
+                            , timelines = List.append model.timelines [ timeline ]
+                        }
 
                 ( CreateTimeline parentId, _ ) ->
-                    ( { model | timelines = List.append model.timelines [ createTimeline parentId model ], dirty = True }, Cmd.none )
+                    let
+                        timeline =
+                            createTimeline parentId model
+                    in
+                    update
+                        (ProjectMsg <| EditTimeline <| Just timeline)
+                        { model | timelines = List.append model.timelines [ timeline ] }
 
-                ( CreateTodo parentId, _ ) ->
-                    ( { model | todos = List.append model.todos [ createTodo parentId model ], dirty = True }, Cmd.none )
+                ( CreateTodo parentTimelineId, _ ) ->
+                    let
+                        todo =
+                            createTodo parentTimelineId model
+                    in
+                    update
+                        (ProjectMsg <| EditTodo <| Just todo)
+                        { model | todos = List.append model.todos [ todo ] }
 
         ProjectMsg projectMsg ->
             updateEditor projectMsg model

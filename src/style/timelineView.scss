@@ -69,6 +69,9 @@ $todo-item-size: 25px;
     height: $todo-item-size;
     border: 2px solid transparent;
     border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &__container {
       display: flex;

@@ -16,3 +16,10 @@
 .editor-content {
   max-height: 100vh;
 }
+
+.editor-card {
+  &__header {
+    width: 100%;
+    display: flex;
+  }
+}
