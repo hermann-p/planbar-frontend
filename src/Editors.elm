@@ -19,8 +19,9 @@ import Html
         , textarea
         , ul
         )
-import Html.Attributes exposing (checked, class, classList, for, href, id, style, type_, value)
-import Html.Events exposing (onCheck, onClick, onInput)
+import Html.Attributes as Attr exposing (checked, class, classList, for, href, id, style, title, type_, value)
+import Html.Events exposing (onCheck, onClick, onInput, onSubmit)
+import Html.Events.Extra exposing (onClickStopPropagation)
 import Project
     exposing
         ( EditorMsg(..)
@@ -69,7 +70,7 @@ projectEditor prj =
                 comment =
                     Maybe.withDefault "" project.comment
             in
-            form []
+            form [ onSubmit <| ProjectMsg Noop ]
                 [ label [ for "project-title" ] [ text "Name" ]
                 , input [ type_ "text", id "project-title", onInput <| ProjectMsg << SetProjectTitle, value project.title ] []
                 , div
@@ -87,8 +88,10 @@ projectEditor prj =
                         , input [ type_ "date", id "project-end", onInput (onDate SetProjectEnd), value <| Date.toIsoString project.end ] []
                         ]
                     ]
-                , label [ for "project-comment" ] [ text "Anmerkungen" ]
-                , textarea [ id "project-comment", onInput setComment, value comment ] []
+                , div []
+                    [ label [ for "project-comment" ] [ text "Anmerkungen" ]
+                    , textarea [ id "project-comment", onInput setComment, value comment ] []
+                    ]
                 ]
 
 
@@ -103,7 +106,7 @@ timelineEditor tl =
                 comment =
                     Maybe.withDefault "" timeline.comment
             in
-            form []
+            form [ onSubmit (ProjectMsg Noop) ]
                 [ div []
                     [ label [ for "timeline-title" ] [ text "Name" ]
                     , input
@@ -128,7 +131,7 @@ todoEditor td =
             noHtml
 
         Just todo ->
-            form []
+            form [ onSubmit (ProjectMsg Noop) ]
                 [ div []
                     [ label [ for "todo-title" ] [ text "Name" ]
                     , input [ type_ "text", id "todo-title", value todo.title, onInput <| ProjectMsg << SetTodoTitle ] []
@@ -187,23 +190,45 @@ timelineSelector model =
     ]
 
 
+type alias IconName =
+    String
+
+
+type alias ButtonStyle =
+    String
+
+
 type Icon
-    = Icon String
+    = Icon IconName
+    | StyledIcon IconName ButtonStyle
+    | StyledIconWithTitle IconName ButtonStyle String
 
 
 iconDelete : Icon
 iconDelete =
-    Icon "icofont-trash"
+    StyledIconWithTitle "icofont-trash" "btn-danger" "Löschen"
 
 
 iconCreate : Icon
 iconCreate =
-    Icon "icofont-plus"
+    StyledIconWithTitle "icofont-plus" "btn-success" "Hinzufügen"
 
 
 actionButton : Icon -> (() -> Msg) -> Html Msg
-actionButton (Icon iconName) handleClick =
-    button [ class "btn-transparent", onClick (handleClick ()) ]
+actionButton icon handleClick =
+    let
+        ( iconName, buttonStyle, title ) =
+            case icon of
+                Icon name ->
+                    ( name, "btn-transparent", "" )
+
+                StyledIcon name style ->
+                    ( name, style, "" )
+
+                StyledIconWithTitle name style title_ ->
+                    ( name, style, title_ )
+    in
+    button [ class buttonStyle, onClick (handleClick ()), Attr.title title ]
         [ i [ class iconName ] [] ]
 
 
@@ -306,28 +331,34 @@ editorView ({ editorState } as model) =
             "editor-wrapper"
     in
     div
-        [ classList
-            [ ( baseClass ++ " bg-green-100 text-dark", True )
-            , ( baseClass ++ "--open", state /= EditorClosed )
-            ]
+        [ classList [ ( "overlay-bg", True ), ( "overlay-bg--open", state /= EditorClosed ) ]
+        , onClick (ProjectMsg <| EditProject Nothing)
         ]
-        [ div [ class "editor-content frame" ]
-            [ div [ class "frame__header level" ]
-                [ button
-                    [ class "btn-transparent icofont-close-line icofont-2x  level-item"
-                    , onClick (ProjectMsg <| EditProject Nothing)
-                    ]
-                    []
-                , h5 [ class "frame__title level-item" ]
-                    [ text "Projekte bearbeiten"
-                    ]
+        [ div
+            [ classList
+                [ ( baseClass ++ " bg-green-100 text-dark", True )
+                , ( baseClass ++ "--open", state /= EditorClosed )
                 ]
-            , div [ class "frame__body" ]
-                [ div
-                    []
-                    [ editorCard "Project" (projectSelector model) (projectEditor <| getSelectedProject model)
-                    , editorCard "Phase" (timelineSelector model) (timelineEditor <| getSelectedTimeline model)
-                    , editorCard "Aufgabe" (todoSelector model) (todoEditor <| getSelectedTodo model)
+            , onClickStopPropagation (ProjectMsg Noop)
+            ]
+            [ div [ class "editor-content frame" ]
+                [ div [ class "frame__header level" ]
+                    [ button
+                        [ class "btn-transparent icofont-close-line icofont-2x  level-item"
+                        , onClick (ProjectMsg <| EditProject Nothing)
+                        ]
+                        []
+                    , h5 [ class "frame__title level-item" ]
+                        [ text "Projekte bearbeiten"
+                        ]
+                    ]
+                , div [ class "frame__body" ]
+                    [ div
+                        []
+                        [ editorCard "Project" (projectSelector model) (projectEditor <| getSelectedProject model)
+                        , editorCard "Phase" (timelineSelector model) (timelineEditor <| getSelectedTimeline model)
+                        , editorCard "Aufgabe" (todoSelector model) (todoEditor <| getSelectedTodo model)
+                        ]
                     ]
                 ]
             ]

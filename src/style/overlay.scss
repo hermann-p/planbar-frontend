@@ -1,0 +1,14 @@
+.overlay-bg {
+  position: fixed;
+  background-color: transparent;
+  transition: all 300ms ease-out;
+
+  &--open {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    background-color: rgba(50, 50, 50, 0.6);
+  }
+}

@@ -1,12 +1,9 @@
-// @import "../../node_modules/bulma/bulma";
-
-// @import "pico-master/scss/pico.scss";
-
 @import "../../node_modules/cirrus-ui/dist/cirrus-all.min";
 @import "./icofont.min";
 @import "layout";
 @import "timelineView";
 @import "editor";
+@import "overlay";
 
 @font-face {
   font-family: "Nunito";
@@ -16,8 +13,4 @@
 @font-face {
   font-family: "Montserrat";
   src: url ("/fonts/Montserrat-VariableFont_wght");
-}
-
-.btn-close {
-  margin: 0;
 }
