@@ -198,7 +198,7 @@ projectViewHeader project =
         , rowspan <| List.length project.timelines
         , onClick << ProjectMsg <| EditProject (Just project)
         ]
-        [ text project.title ]
+        [ div [ class "project-timeline__project-header__title" ] [ text project.title ] ]
 
 
 projectView : ViewType -> Date -> List Date -> Project -> List (Html Msg)

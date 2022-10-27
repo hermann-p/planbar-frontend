@@ -1,5 +1,5 @@
 $col-width-week: 60px;
-$col-width-project-header: 120px;
+$col-width-project-header: 200px;
 $color-bg-today: beige;
 $todo-item-size: 25px;
 
@@ -47,6 +47,15 @@ $todo-item-size: 25px;
     left: 0;
     background-color: white;
     z-index: 1;
+
+    &__title {
+      border-radius: 6px;
+      padding: 5px 10px;
+      &:hover {
+        transition: background-color 300ms ease-in-out;
+        background-color: transparentize(lightgrey, 0.5);
+      }
+    }
   }
   &__item {
     &--today {
@@ -55,13 +64,30 @@ $todo-item-size: 25px;
   }
 }
 
+@mixin background-line($left: 50%, $right: 50%) {
+  position: absolute;
+  content: "";
+  left: $left;
+  right: $right;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px 0;
+}
+
 .project-timeline__item {
   border-left: 1px solid lightgrey;
-  &--active {
-  }
+  position: relative;
 
   &__indicator {
     padding: 5px 0;
+  }
+
+  &--start::after {
+    @include background-line($right: 0);
+    z-index: -1;
+  }
+  &--end::before {
+    @include background-line($left: 0);
   }
 
   .timeline-event {
@@ -72,8 +98,11 @@ $todo-item-size: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: white;
 
     &__container {
+      position: relative;
+
       display: flex;
       align-items: center;
       justify-content: center;
