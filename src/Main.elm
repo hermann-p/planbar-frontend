@@ -4,8 +4,9 @@ import Browser exposing (Document)
 import Date
 import Editors exposing (editorView)
 import Fixtures
-import Html exposing (Html, aside, div, li, main_, nav, section, text, ul)
-import Html.Attributes exposing (class, classList)
+import Html exposing (Html, a, aside, button, div, i, li, main_, nav, section, span, text, ul)
+import Html.Attributes exposing (class, classList, disabled, href)
+import Html.Events exposing (onClick)
 import Project exposing (..)
 import Task
 import Timeline exposing (timelineView)
@@ -44,13 +45,44 @@ getActivePage { page } =
             { allPagesFalse | projectEditor = True }
 
 
+type alias IconName =
+    String
+
+
+sidebarButton : IconName -> String -> Msg -> Html Msg
+sidebarButton iconName title handleClick =
+    li [ class "menu-item" ]
+        [ button [ class "btn-transparent text-light", onClick handleClick ]
+            [ i [ class iconName ] []
+            , text title
+            ]
+        ]
+
+
 viewSidebar : Model -> Html Msg
-viewSidebar _ =
+viewSidebar model =
     aside [ class "sidebar bg-green-800 text-light" ]
-        [ div [ class "icofont-fox icofont-5x" ] []
+        [ div [ class "main-icon" ] [ i [ class "icofont-fox icofont-5x" ] [] ]
 
         -- div [ class "icofont-bars icofont-rotate-90 icofont-5x" ] []
-        , text "I am a sidebar"
+        , ul [ class "menu" ]
+            [ -- li [ class "divider" ] []
+              li [ class "menu-title" ] [ text "Projekte" ]
+            , sidebarButton "icofont-ui-edit" "Bearbeiten" (ProjectMsg <| EditTimeline (listLast model.timelines))
+            , sidebarButton "icofont-ui-add" "Neues Projekt" (MainMsg CreateProject)
+            , li [ class "menu-title" ] [ text "Plan" ]
+            , sidebarButton "icofont-folder-open" "Öffnen" (ProjectMsg Noop)
+            , li [ class "menu-item" ]
+                [ button
+                    [ classList [ ( "btn-transparent", not model.dirty ), ( "btn-success", model.dirty ) ]
+                    , disabled (not model.dirty)
+                    ]
+                    [ i [ class "icofont-save" ] []
+                    , text "Speichern"
+                    ]
+                ]
+            , sidebarButton "icofont-settings" "Einstellungen" (ProjectMsg Noop)
+            ]
         ]
 
 

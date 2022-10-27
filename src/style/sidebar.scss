@@ -1,0 +1,22 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+
+  .main-icon {
+    text-align: center;
+  }
+
+  .menu-item button {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+
+    i {
+      display: inline-block;
+      width: 2em;
+    }
+  }
+}
