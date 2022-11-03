@@ -6,6 +6,8 @@
 
   .main-icon {
     text-align: center;
+    display: flex;
+    flex-direction: column;
   }
 
   .menu-item button {

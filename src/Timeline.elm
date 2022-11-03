@@ -99,7 +99,8 @@ timelineEventItem { color } todo =
         Just event ->
             div
                 [ class (baseName ++ "__container") ]
-                [ div
+                [ div [ class (baseName ++ "__bar--left"), style "border-color" color ] []
+                , div
                     [ classList [ ( baseName, True ), ( baseName ++ "--done", event.done ) ]
                     , style "border-color" color
                     , style "color" color
@@ -111,6 +112,26 @@ timelineEventItem { color } todo =
                      else
                         []
                     )
+                , div [ class "event-actions" ]
+                    [ div [ class "event-actions__title" ] [ text event.title ]
+                    , div [ class "event-actions__button-area" ]
+                        [ div [ class "event-actions__button" ]
+                            [ i [ class "icofont-ui-edit", onClick (ProjectMsg <| EditTodo todo) ] [] ]
+                        , div [ class "event-actions__button" ]
+                            [ i
+                                [ class <|
+                                    if event.done then
+                                        "icofont-ui-close"
+
+                                    else
+                                        "icofont-ui-check"
+                                , onClick (ProjectMsg <| SetTodoDone (not event.done))
+                                ]
+                                []
+                            ]
+                        ]
+                    ]
+                , div [ class (baseName ++ "__bar--right"), style "border-color" color ] []
                 ]
 
         Nothing ->
@@ -147,7 +168,8 @@ projectTimelineItem { timeline, today, project } day =
 
         cssClasses =
             [ ( baseClass, True )
-            , ( "hover-grow", day == duration.from || day == duration.to || hasEvent )
+
+            -- , ( "hover-grow", day == duration.from || day == duration.to || hasEvent )
             , ( baseClass ++ "--today", day == today )
             , ( baseClass ++ "--active", isActive && not hasEvent )
             , ( baseClass ++ "--event", hasEvent )

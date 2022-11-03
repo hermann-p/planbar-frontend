@@ -6,6 +6,7 @@ $todo-item-size: 25px;
 .timeline-view {
   overflow: auto;
   position: relative;
+  height: 100%;
 }
 
 .timeline {
@@ -64,30 +65,23 @@ $todo-item-size: 25px;
   }
 }
 
-@mixin background-line($left: 50%, $right: 50%) {
-  position: absolute;
-  content: "";
-  left: $left;
-  right: $right;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 5px 0;
-}
-
 .project-timeline__item {
   border-left: 1px solid lightgrey;
-  position: relative;
+
+  &--end {
+    .timeline-event__container .timeline-event__bar--right {
+      border: none;
+    }
+  }
+
+  &--start {
+    .timeline-event__container .timeline-event__bar--left {
+      border: none;
+    }
+  }
 
   &__indicator {
     padding: 5px 0;
-  }
-
-  &--start::after {
-    @include background-line($right: 0);
-    z-index: -1;
-  }
-  &--end::before {
-    @include background-line($left: 0);
   }
 
   .timeline-event {
@@ -100,15 +94,51 @@ $todo-item-size: 25px;
     justify-content: center;
     background-color: white;
 
-    &__container {
-      position: relative;
+    &__bar--left,
+    &__bar--right {
+      flex: 1;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
 
+    &__container {
       display: flex;
       align-items: center;
       justify-content: center;
-    }
 
-    &--done {
+      .event-actions {
+        width: 100px;
+        display: none;
+        position: absolute;
+        padding: 8px;
+        background-color: rgba(50, 50, 50, 0.7);
+        border-radius: 6px;
+        color: lightgrey;
+        &__title {
+          text-align: center;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100px;
+          // white-space: nowrap;
+          font-size: 13px;
+        }
+        &__button {
+          &:hover {
+            color: white;
+          }
+          &-area {
+            display: flex;
+            justify-content: space-evenly;
+          }
+        }
+      }
+
+      &:hover {
+        position: relative;
+        .event-actions {
+          display: block;
+        }
+      }
     }
   }
 }

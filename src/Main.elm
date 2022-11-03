@@ -4,7 +4,7 @@ import Browser exposing (Document)
 import Date
 import Editors exposing (editorView)
 import Fixtures
-import Html exposing (Html, a, aside, button, div, i, li, main_, nav, section, span, text, ul)
+import Html exposing (Html, aside, button, div, i, li, main_, nav, section, text, ul)
 import Html.Attributes exposing (class, classList, disabled, href)
 import Html.Events exposing (onClick)
 import Project exposing (..)
@@ -62,7 +62,7 @@ sidebarButton iconName title handleClick =
 viewSidebar : Model -> Html Msg
 viewSidebar model =
     aside [ class "sidebar bg-green-800 text-light" ]
-        [ div [ class "main-icon" ] [ i [ class "icofont-fox icofont-5x" ] [] ]
+        [ div [ class "main-icon" ] [ i [ class "icofont-fox icofont-5x" ] [], text "Symbolbild \"Logo\"" ]
 
         -- div [ class "icofont-bars icofont-rotate-90 icofont-5x" ] []
         , ul [ class "menu" ]
@@ -70,6 +70,7 @@ viewSidebar model =
               li [ class "menu-title" ] [ text "Projekte" ]
             , sidebarButton "icofont-ui-edit" "Bearbeiten" (ProjectMsg <| EditTimeline (listLast model.timelines))
             , sidebarButton "icofont-ui-add" "Neues Projekt" (MainMsg CreateProject)
+            , sidebarButton "icofont-clock-time" "Vorschau" (ProjectMsg Noop)
             , li [ class "menu-title" ] [ text "Plan" ]
             , sidebarButton "icofont-folder-open" "Öffnen" (ProjectMsg Noop)
             , li [ class "menu-item" ]
@@ -97,7 +98,7 @@ viewNavbar model =
             li [ classList [ ( "selected", selected ) ] ] [ div [ class "tab-item-content" ] [ text title ] ]
     in
     nav [ class "navbar" ]
-        [ div [ class "tab-container" ]
+        [ div [ class "tab-container tabs-classic" ]
             [ ul []
                 [ navigationItem "Woche" isPageActive.week
                 , navigationItem "Monat" isPageActive.month
@@ -146,11 +147,8 @@ initialState =
     in
     { page = WeekView initialDate
     , projects = Fixtures.projects
-    , timelines = List.concatMap .timelines Fixtures.projects
-    , todos =
-        Fixtures.projects
-            |> List.concatMap .timelines
-            |> List.concatMap .todos
+    , timelines = Fixtures.timelines
+    , todos = Fixtures.todos
     , today = initialDate
     , displayPeriod = { from = initialDate, to = initialDate }
     , editorState =
