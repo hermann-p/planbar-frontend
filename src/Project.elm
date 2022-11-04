@@ -208,6 +208,7 @@ type EditorMsg
     | SetProjectComment (Maybe String)
     | SetTimelineTitle String
     | SetTimelineComment String
+    | SetTodo Todo
     | SetTodoDate Date
     | SetTodoTitle String
     | SetTodoDone Bool
@@ -455,6 +456,9 @@ updateEditor msg ({ editorState } as model) =
 
         SetTodoDone done ->
             ( updateTodo todoID (\t -> { t | done = done }) model, Cmd.none )
+
+        SetTodo todo ->
+            ( updateTodo (Just todo.id) (\_ -> todo) model, Cmd.none )
 
 
 noHtml : Html msg

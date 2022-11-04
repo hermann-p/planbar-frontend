@@ -125,7 +125,7 @@ timelineEventItem { color } todo =
 
                                     else
                                         "icofont-ui-check"
-                                , onClick (ProjectMsg <| SetTodoDone (not event.done))
+                                , onClick (ProjectMsg <| SetTodo { event | done = not event.done })
                                 ]
                                 []
                             ]
