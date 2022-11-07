@@ -104,7 +104,7 @@ timelineEventItem { color } todo =
                     [ classList [ ( baseName, True ), ( baseName ++ "--done", event.done ) ]
                     , style "border-color" color
                     , style "color" color
-                    , onClick (ProjectMsg (EditTodo todo))
+                    , onClick (ProjectMsg (EditTodo event))
                     ]
                     (if event.done then
                         [ i [ class "icofont-ui-check" ] [] ]
@@ -116,7 +116,7 @@ timelineEventItem { color } todo =
                     [ div [ class "event-actions__title" ] [ text event.title ]
                     , div [ class "event-actions__button-area" ]
                         [ div [ class "event-actions__button" ]
-                            [ i [ class "icofont-ui-edit", onClick (ProjectMsg <| EditTodo todo) ] [] ]
+                            [ i [ class "icofont-ui-edit", onClick (ProjectMsg <| EditTodo event) ] [] ]
                         , div [ class "event-actions__button" ]
                             [ i
                                 [ class <|
@@ -185,7 +185,7 @@ projectTimelineItem { timeline, today, project } day =
             [ div
                 [ class (baseClass ++ "__indicator hover-grow")
                 , style "background-color" project.color
-                , onClick (ProjectMsg (EditTimeline <| Just timeline))
+                , onClick (ProjectMsg (EditTimeline timeline))
                 ]
                 []
             ]
@@ -218,7 +218,7 @@ projectViewHeader project =
     td
         [ class "project-timeline__project-header"
         , rowspan <| List.length project.timelines
-        , onClick << ProjectMsg <| EditProject (Just project)
+        , onClick << ProjectMsg <| EditProject project
         ]
         [ div [ class "project-timeline__project-header__title" ] [ text project.title ] ]
 

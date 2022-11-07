@@ -3,7 +3,6 @@ module Project exposing (..)
 import Date exposing (Date)
 import Dict exposing (update)
 import Html exposing (Html, text)
-import Monocle.Lens exposing (Lens)
 
 
 type alias Duration =
@@ -133,7 +132,7 @@ type alias Model =
     , todos : List Todo
     , today : Date
     , displayPeriod : Duration
-    , editorState : EditorModel
+    , editorState : EditorState
     , dirty : Bool
     }
 
@@ -200,29 +199,21 @@ type alias ActivePage =
 
 
 type EditorMsg
-    = SetProjectTitle String
-    | SetProjectColor String
-    | SetProjectStart Date
-    | SetProjectEnd Date
-    | SetProjectPeople (List Person)
-    | SetProjectComment (Maybe String)
-    | SetTimelineTitle String
-    | SetTimelineComment String
+    = SetProject Project
+    | SetTimeline Timeline
     | SetTodo Todo
-    | SetTodoDate Date
-    | SetTodoTitle String
-    | SetTodoDone Bool
-    | EditProject (Maybe Project)
-    | EditTimeline (Maybe Timeline)
-    | EditTodo (Maybe Todo)
+    | EditProject Project
+    | EditTimeline Timeline
+    | EditTodo Todo
+    | CloseEditor
     | Noop
 
 
-type alias EditorModel =
-    { projectID : Maybe ProjectID
-    , timelineID : Maybe TimelineID
-    , todoID : Maybe TodoID
-    }
+type EditorState
+    = EditorClosed
+    | EditorTimeline TimelineID
+    | EditorProject ProjectID
+    | EditorTodo TodoID
 
 
 type MainMsg
@@ -327,7 +318,7 @@ update msg ({ page } as model) =
                             createTimeline project.id { model | projects = List.append model.projects [ project ] }
                     in
                     update
-                        (ProjectMsg <| EditTimeline <| Just timeline)
+                        (ProjectMsg <| EditTimeline timeline)
                         { model
                             | projects = List.append model.projects [ project ]
                             , timelines = List.append model.timelines [ timeline ]
@@ -339,7 +330,7 @@ update msg ({ page } as model) =
                             createTimeline parentId model
                     in
                     update
-                        (ProjectMsg <| EditTimeline <| Just timeline)
+                        (ProjectMsg <| EditTimeline timeline)
                         { model | timelines = List.append model.timelines [ timeline ] }
 
                 ( CreateTodo parentTimelineId, _ ) ->
@@ -348,7 +339,7 @@ update msg ({ page } as model) =
                             createTodo parentTimelineId model
                     in
                     update
-                        (ProjectMsg <| EditTodo <| Just todo)
+                        (ProjectMsg <| EditTodo todo)
                         { model | todos = List.append model.todos [ todo ] }
 
         ProjectMsg projectMsg ->
@@ -356,106 +347,34 @@ update msg ({ page } as model) =
 
 
 updateEditor : EditorMsg -> Model -> ( Model, Cmd Msg )
-updateEditor msg ({ editorState } as model) =
-    let
-        { projectID, timelineID, todoID } =
-            editorState
-
-        editorLens =
-            Lens .editorState (\v m -> { m | editorState = v })
-
-        getFirstTimeline : Maybe Project -> Maybe Timeline
-        getFirstTimeline prj =
-            prj
-                |> Maybe.andThen (\p -> Just p.timelines)
-                |> Maybe.andThen List.head
-
-        getFirstTodo : Maybe Timeline -> Maybe Todo
-        getFirstTodo t =
-            t
-                |> Maybe.andThen (\td -> Just td.todos)
-                |> Maybe.andThen List.head
-    in
+updateEditor msg model =
     case msg of
         Noop ->
             ( model, Cmd.none )
 
-        EditProject prj ->
-            let
-                tl =
-                    getFirstTimeline prj
-            in
-            ( editorLens.set
-                { editorState
-                    | projectID = Maybe.map .id prj
-                    , timelineID = Maybe.map .id tl
-                    , todoID = Maybe.map .id <| getFirstTodo tl
-                }
-                model
+        CloseEditor ->
+            ( { model | editorState = EditorClosed }, Cmd.none )
+
+        EditProject project ->
+            ( { model | editorState = EditorProject project.id }
             , Cmd.none
             )
 
-        EditTimeline tl ->
-            ( editorLens.set
-                { editorState
-                    | projectID = Maybe.andThen (\t -> getParentProject t model) tl |> Maybe.map .id
-                    , timelineID = Maybe.map .id tl
-                    , todoID = Maybe.map .id <| getFirstTodo tl
-                }
-                model
+        EditTimeline timeline ->
+            ( { model | editorState = EditorTimeline timeline.id }
             , Cmd.none
             )
 
         EditTodo todo ->
-            let
-                timeline =
-                    Maybe.andThen (\t -> getParentTimeline t model) todo
-
-                project =
-                    Maybe.andThen (\t -> getParentProject t model) timeline
-            in
-            ( editorLens.set
-                { editorState
-                    | projectID = Maybe.map .id project
-                    , timelineID = Maybe.map .id timeline
-                    , todoID = Maybe.map .id todo
-                }
-                model
+            ( { model | editorState = EditorTodo todo.id }
             , Cmd.none
             )
 
-        SetProjectColor color ->
-            ( updateProject projectID (\p -> { p | color = color }) model, Cmd.none )
+        SetProject project ->
+            ( updateProject (Just project.id) (\_ -> project) model, Cmd.none )
 
-        SetProjectComment comment ->
-            ( updateProject projectID (\p -> { p | comment = comment }) model, Cmd.none )
-
-        SetProjectEnd date ->
-            ( updateProject projectID (\p -> { p | end = date }) model, Cmd.none )
-
-        SetProjectPeople people ->
-            ( updateProject projectID (\p -> { p | people = people }) model, Cmd.none )
-
-        SetProjectStart date ->
-            ( updateProject projectID (\p -> { p | start = date }) model, Cmd.none )
-
-        SetProjectTitle title ->
-            ( updateProject projectID (\p -> { p | title = title }) model, Cmd.none )
-
-        SetTimelineTitle title ->
-            ( updateTimeline timelineID (\t -> { t | title = title }) model, Cmd.none )
-
-        SetTimelineComment text ->
-            ( updateTimeline timelineID (\t -> { t | comment = Just text }) model, Cmd.none )
-
-        SetTodoDate date ->
-            ( updateTodo todoID (\t -> { t | date = date }) model, Cmd.none )
-
-        SetTodoTitle title ->
-            ( updateTodo todoID (\t -> { t | title = title }) model, Cmd.none )
-
-        SetTodoDone done ->
-            ( updateTodo todoID (\t -> { t | done = done }) model, Cmd.none )
+        SetTimeline timeline ->
+            ( updateTimeline (Just timeline.id) (\_ -> timeline) model, Cmd.none )
 
         SetTodo todo ->
             ( updateTodo (Just todo.id) (\_ -> todo) model, Cmd.none )
@@ -480,7 +399,12 @@ getProject id model =
 
 getSelectedProject : Model -> Maybe Project
 getSelectedProject model =
-    getProject (Maybe.withDefault -1 model.editorState.projectID) model
+    case model.editorState of
+        EditorProject id ->
+            getProject id model
+
+        _ ->
+            Nothing
 
 
 getTimeline : TimelineID -> Model -> Maybe Timeline
@@ -490,7 +414,12 @@ getTimeline id model =
 
 getSelectedTimeline : Model -> Maybe Timeline
 getSelectedTimeline model =
-    getTimeline (Maybe.withDefault -1 model.editorState.timelineID) model
+    case model.editorState of
+        EditorTimeline id ->
+            getTimeline id model
+
+        _ ->
+            Nothing
 
 
 getParentProject : Timeline -> Model -> Maybe Project
@@ -505,7 +434,12 @@ getTodo id model =
 
 getSelectedTodo : Model -> Maybe Todo
 getSelectedTodo model =
-    getTodo (Maybe.withDefault -1 model.editorState.todoID) model
+    case model.editorState of
+        EditorTodo id ->
+            getTodo id model
+
+        _ ->
+            Nothing
 
 
 getParentTimeline : Todo -> Model -> Maybe Timeline

@@ -5,7 +5,7 @@ import Date
 import Editors exposing (editorView)
 import Fixtures
 import Html exposing (Html, aside, button, div, i, li, main_, nav, section, text, ul)
-import Html.Attributes exposing (class, classList, disabled, href)
+import Html.Attributes exposing (class, classList, disabled)
 import Html.Events exposing (onClick)
 import Project exposing (..)
 import Task
@@ -68,7 +68,15 @@ viewSidebar model =
         , ul [ class "menu" ]
             [ -- li [ class "divider" ] []
               li [ class "menu-title" ] [ text "Projekte" ]
-            , sidebarButton "icofont-ui-edit" "Bearbeiten" (ProjectMsg <| EditTimeline (listLast model.timelines))
+            , sidebarButton "icofont-ui-edit"
+                "Bearbeiten"
+                (case listLast model.timelines of
+                    Just timeline ->
+                        ProjectMsg (EditTimeline timeline)
+
+                    _ ->
+                        MainMsg CreateProject
+                )
             , sidebarButton "icofont-ui-add" "Neues Projekt" (MainMsg CreateProject)
             , sidebarButton "icofont-clock-time" "Vorschau" (ProjectMsg Noop)
             , li [ class "menu-title" ] [ text "Plan" ]
@@ -151,11 +159,7 @@ initialState =
     , todos = Fixtures.todos
     , today = initialDate
     , displayPeriod = { from = initialDate, to = initialDate }
-    , editorState =
-        { projectID = Nothing
-        , timelineID = Nothing
-        , todoID = Nothing
-        }
+    , editorState = EditorClosed
     , dirty = False
     }
 

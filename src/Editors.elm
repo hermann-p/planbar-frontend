@@ -25,15 +25,13 @@ import Html.Events.Extra exposing (onClickStopPropagation)
 import Project
     exposing
         ( EditorMsg(..)
+        , EditorState(..)
         , MainMsg(..)
         , Model
         , Msg(..)
         , Project
-        , ProjectID
         , Timeline
-        , TimelineID
         , Todo
-        , TodoID
         , getSelectedProject
         , getSelectedTimeline
         , getSelectedTodo
@@ -62,30 +60,30 @@ projectEditor prj =
                 setComment : String -> Msg
                 setComment text =
                     if String.length text == 0 then
-                        ProjectMsg (SetProjectComment Nothing)
+                        ProjectMsg (SetProject { project | comment = Nothing })
 
                     else
-                        ProjectMsg << SetProjectComment <| Just text
+                        ProjectMsg (SetProject { project | comment = Just text })
 
                 comment =
                     Maybe.withDefault "" project.comment
             in
             form [ onSubmit <| ProjectMsg Noop ]
                 [ label [ for "project-title" ] [ text "Name" ]
-                , input [ type_ "text", id "project-title", onInput <| ProjectMsg << SetProjectTitle, value project.title ] []
+                , input [ type_ "text", id "project-title", onInput <| \value -> ProjectMsg (SetProject { project | title = value }), value project.title ] []
                 , div
                     [ class "grid grid-cols-3 u-gap-2" ]
                     [ div []
                         [ label [ for "project-color" ] [ text "Farbe" ]
-                        , input [ type_ "color", id "project-color", onInput <| ProjectMsg << SetProjectColor, value project.color ] []
+                        , input [ type_ "color", id "project-color", onInput <| \color -> ProjectMsg (SetProject { project | color = color }), value project.color ] []
                         ]
                     , div []
                         [ label [ for "project-start" ] [ text "Projektanfang" ]
-                        , input [ type_ "date", id "project-start", onInput (onDate SetProjectStart), value <| Date.toIsoString project.start ] []
+                        , input [ type_ "date", id "project-start", onInput (onDate (\date -> SetProject { project | start = date })), value <| Date.toIsoString project.start ] []
                         ]
                     , div []
                         [ label [ for "project-end" ] [ text "Projektende" ]
-                        , input [ type_ "date", id "project-end", onInput (onDate SetProjectEnd), value <| Date.toIsoString project.end ] []
+                        , input [ type_ "date", id "project-end", onInput (onDate (\date -> SetProject { project | end = date })), value <| Date.toIsoString project.end ] []
                         ]
                     ]
                 , div []
@@ -113,13 +111,13 @@ timelineEditor tl =
                         [ type_ "text"
                         , id "timeline-title"
                         , value timeline.title
-                        , onInput <| ProjectMsg << SetTimelineTitle
+                        , onInput <| \title -> ProjectMsg (SetTimeline { timeline | title = title })
                         ]
                         []
                     ]
                 , div []
                     [ label [ for "timeline-comment" ] [ text "Anmerkungen" ]
-                    , textarea [ id "timeline-comment", value comment, onInput <| ProjectMsg << SetTimelineComment ] []
+                    , textarea [ id "timeline-comment", value comment, onInput <| \value -> ProjectMsg (SetTimeline { timeline | comment = Just value }) ] []
                     ]
                 ]
 
@@ -134,7 +132,7 @@ todoEditor td =
             form [ onSubmit (ProjectMsg Noop) ]
                 [ div []
                     [ label [ for "todo-title" ] [ text "Name" ]
-                    , input [ type_ "text", id "todo-title", value todo.title, onInput <| ProjectMsg << SetTodoTitle ] []
+                    , input [ type_ "text", id "todo-title", value todo.title, onInput <| \title -> ProjectMsg (SetTodo { todo | title = title }) ] []
                     ]
                 , div [ class "grid grid-cols-2 u-gap-2" ]
                     [ div []
@@ -143,13 +141,13 @@ todoEditor td =
                             [ type_ "date"
                             , id "todo-date"
                             , value (Date.toIsoString todo.date)
-                            , onInput (onDate SetTodoDate)
+                            , onInput (onDate (\date -> SetTodo { todo | date = date }))
                             ]
                             []
                         ]
                     , div []
                         [ label [ for "todo-done" ] [ text "Erledigt" ]
-                        , input [ type_ "checkbox", id "todo-done", checked todo.done, onCheck <| ProjectMsg << SetTodoDone ] []
+                        , input [ type_ "checkbox", id "todo-done", checked todo.done, onCheck <| \done -> ProjectMsg (SetTodo { todo | done = done }) ] []
                         ]
                     ]
                 ]
@@ -159,7 +157,7 @@ projectSelector : Model -> List (Html Msg)
 projectSelector ({ projects } as model) =
     let
         selectProject project =
-            ProjectMsg (EditProject (Just project))
+            ProjectMsg (EditProject project)
     in
     [ buttonSelector "Projekt" selectProject (getSelectedProject model) projects
     , actionButton iconCreate (\_ -> MainMsg CreateProject)
@@ -178,7 +176,7 @@ timelineSelector model =
                 |> Maybe.withDefault []
 
         selectTimeline timeline =
-            ProjectMsg (EditTimeline (Just timeline))
+            ProjectMsg (EditTimeline timeline)
 
         onCreate _ =
             getSelectedProject model
@@ -244,7 +242,7 @@ todoSelector model =
                 |> Maybe.withDefault []
 
         selectTodo todo =
-            ProjectMsg (EditTodo (Just todo))
+            ProjectMsg (EditTodo todo)
 
         onCreate _ =
             getSelectedTimeline model
@@ -299,11 +297,6 @@ buttonSelector prefix handleClick selectedItem items =
         ]
 
 
-type EditorView
-    = EditorClosed
-    | EditorOpen ProjectID (Maybe TimelineID) (Maybe TodoID)
-
-
 editorCard : String -> List (Html Msg) -> Html Msg -> Html Msg
 editorCard _ children editor =
     section [ class "frame" ]
@@ -314,30 +307,19 @@ editorCard _ children editor =
 
 
 editorView : Model -> Html Msg
-editorView ({ editorState } as model) =
+editorView model =
     let
-        { projectID, timelineID, todoID } =
-            editorState
-
-        state =
-            case projectID of
-                Just pid ->
-                    EditorOpen pid timelineID todoID
-
-                _ ->
-                    EditorClosed
-
         baseClass =
             "editor-wrapper"
     in
     div
-        [ classList [ ( "overlay-bg", True ), ( "overlay-bg--open", state /= EditorClosed ) ]
-        , onClick (ProjectMsg <| EditProject Nothing)
+        [ classList [ ( "overlay-bg", True ), ( "overlay-bg--open", model.editorState /= EditorClosed ) ]
+        , onClick (ProjectMsg CloseEditor)
         ]
         [ div
             [ classList
                 [ ( baseClass ++ " bg-green-100 text-dark", True )
-                , ( baseClass ++ "--open", state /= EditorClosed )
+                , ( baseClass ++ "--open", model.editorState /= EditorClosed )
                 ]
             , onClickStopPropagation (ProjectMsg Noop)
             ]
@@ -345,7 +327,7 @@ editorView ({ editorState } as model) =
                 [ div [ class "frame__header level" ]
                     [ button
                         [ class "btn-transparent icofont-close-line icofont-2x  level-item"
-                        , onClick (ProjectMsg <| EditProject Nothing)
+                        , onClick (ProjectMsg CloseEditor)
                         ]
                         []
                     , h5 [ class "frame__title level-item" ]
