@@ -147,7 +147,7 @@ todoEditor td =
                         ]
                     , div []
                         [ label [ for "todo-done" ] [ text "Erledigt" ]
-                        , input [ type_ "checkbox", id "todo-done", checked todo.done, onCheck <| \done -> ProjectMsg (SetTodo { todo | done = done }) ] []
+                        , input [ type_ "checkbox", id "todo-done", checked todo.done, onCheck <| \done -> ProjectMsg (SetTodo { todo | done = not done }) ] []
                         ]
                     ]
                 ]
