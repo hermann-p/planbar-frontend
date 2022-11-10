@@ -1,6 +1,7 @@
 module Editors exposing (..)
 
 import Date exposing (Date)
+import Fixtures exposing (projects)
 import Html
     exposing
         ( Html
@@ -32,9 +33,15 @@ import Project
         , Project
         , Timeline
         , Todo
+        , getName
+        , getParentProject
+        , getParentTimeline
+        , getProject
         , getSelectedProject
         , getSelectedTimeline
         , getSelectedTodo
+        , getTimeline
+        , getTodo
         , noHtml
         )
 
@@ -47,6 +54,124 @@ onDate msg isoDateString =
 
         _ ->
             ProjectMsg Noop
+
+
+type alias Selectable a =
+    { a
+        | id : Int
+        , title : String
+    }
+
+
+elementPicker : String -> { options : List (Selectable a), onSelect : Int -> Msg, active : Bool, selectedOptionID : Int } -> Html Msg
+elementPicker _ { options, onSelect, active, selectedOptionID } =
+    let
+        baseClass =
+            "picker"
+
+        toPickable : Selectable a -> Html Msg
+        toPickable option =
+            li
+                [ classList [ ( baseClass ++ "__menu-item menu-item", True ), ( baseClass ++ "__menu-item--selected selected", option.id == selectedOptionID ) ]
+                , onClick (onSelect option.id)
+                ]
+                [ div [ class (baseClass ++ "__item-text") ] [ text <| getName option ] ]
+    in
+    div [ classList [ ( baseClass, True ), ( baseClass ++ "--active", active ) ] ]
+        [ ul [ class (baseClass ++ "__item-list menu") ]
+            (List.map toPickable options)
+        ]
+
+
+type ActiveElement
+    = AEProject
+    | AETimeline
+    | AETodo
+
+
+editorSelection : Model -> Html Msg
+editorSelection ({ editorState, projects, timelines, todos } as model) =
+    let
+        todo =
+            getSelectedTodo model
+
+        timeline =
+            case editorState of
+                EditorTimeline id ->
+                    getTimeline id model
+
+                EditorTodo id ->
+                    getTodo id model |> Maybe.andThen (\td -> getParentTimeline td model)
+
+                _ ->
+                    Nothing
+
+        project =
+            case editorState of
+                EditorProject id ->
+                    getProject id model
+
+                EditorTimeline id ->
+                    getTimeline id model
+                        |> Maybe.andThen (\tl -> getParentProject tl model)
+
+                EditorTodo id ->
+                    getTodo id model
+                        |> Maybe.andThen (\td -> getParentTimeline td model)
+                        |> Maybe.andThen (\tl -> getParentProject tl model)
+
+                _ ->
+                    Nothing
+
+        projectOptions =
+            projects
+
+        activeElement =
+            case editorState of
+                EditorTodo _ ->
+                    AETodo
+
+                EditorTimeline _ ->
+                    AETimeline
+
+                _ ->
+                    AEProject
+
+        timelineOptions =
+            project |> Maybe.map (\p -> List.filter (\tl -> tl.parentProject == p.id) timelines) |> Maybe.withDefault []
+
+        todoOptions =
+            timeline |> Maybe.map (\t -> List.filter (\td -> td.parentTimeline == t.id) todos) |> Maybe.withDefault []
+
+        projectPicker =
+            elementPicker "Projekt"
+                { options = projectOptions
+                , onSelect = \id -> ProjectMsg (getProject id model |> Maybe.map EditProject |> Maybe.withDefault Noop)
+                , active = activeElement == AEProject
+                , selectedOptionID = project |> Maybe.map .id |> Maybe.withDefault -1
+                }
+
+        timelinePicker =
+            elementPicker "Phase"
+                { options = timelineOptions
+                , onSelect = \id -> ProjectMsg (getTimeline id model |> Maybe.map EditTimeline |> Maybe.withDefault Noop)
+                , active = activeElement == AETimeline
+                , selectedOptionID = timeline |> Maybe.map .id |> Maybe.withDefault -1
+                }
+
+        todoPicker =
+            elementPicker "Aufgabe"
+                { options = todoOptions
+                , onSelect = \id -> ProjectMsg (getTodo id model |> Maybe.map EditTodo |> Maybe.withDefault Noop)
+                , active = activeElement == AETodo
+                , selectedOptionID = todo |> Maybe.map .id |> Maybe.withDefault -1
+                }
+    in
+    section [ class "editor-selection" ]
+        [ projectPicker
+        , timelinePicker
+        , todoPicker
+        ]
 
 
 projectEditor : Maybe Project -> Html Msg
@@ -266,11 +391,7 @@ buttonSelector prefix handleClick selectedItem items =
 
         itemTitle : Item x -> String
         itemTitle item =
-            if item.title == "" then
-                "#" ++ String.fromInt item.id
-
-            else
-                item.title
+            getName item
 
         buttonTitle =
             case selectedItem of
@@ -335,11 +456,21 @@ editorView model =
                         ]
                     ]
                 , div [ class "frame__body" ]
-                    [ div
+                    [ editorSelection model
+                    , div
                         []
-                        [ editorCard "Project" (projectSelector model) (projectEditor <| getSelectedProject model)
-                        , editorCard "Phase" (timelineSelector model) (timelineEditor <| getSelectedTimeline model)
-                        , editorCard "Aufgabe" (todoSelector model) (todoEditor <| getSelectedTodo model)
+                        [ case model.editorState of
+                            EditorProject id ->
+                                editorCard "Project" (projectSelector model) (projectEditor <| getProject id model)
+
+                            EditorTimeline id ->
+                                editorCard "Phase" (timelineSelector model) (timelineEditor <| getTimeline id model)
+
+                            EditorTodo id ->
+                                editorCard "Aufgabe" (todoSelector model) (todoEditor <| getTodo id model)
+
+                            _ ->
+                                noHtml
                         ]
                     ]
                 ]

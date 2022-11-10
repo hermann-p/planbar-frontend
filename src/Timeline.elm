@@ -113,7 +113,7 @@ timelineEventItem { color } todo =
                         []
                     )
                 , div [ class "event-actions" ]
-                    [ div [ class "event-actions__title" ] [ text event.title ]
+                    [ div [ class "event-actions__title" ] [ text <| getName event ]
                     , div [ class "event-actions__button-area" ]
                         [ div [ class "event-actions__button" ]
                             [ i [ class "icofont-ui-edit", onClick (ProjectMsg <| EditTodo event) ] [] ]
@@ -220,7 +220,7 @@ projectViewHeader project =
         , rowspan <| List.length project.timelines
         , onClick << ProjectMsg <| EditProject project
         ]
-        [ div [ class "project-timeline__project-header__title" ] [ text project.title ] ]
+        [ div [ class "project-timeline__project-header__title" ] [ text <| getName project ] ]
 
 
 projectView : ViewType -> Date -> List Date -> Project -> List (Html Msg)

@@ -445,3 +445,12 @@ getSelectedTodo model =
 getParentTimeline : Todo -> Model -> Maybe Timeline
 getParentTimeline todo model =
     getTimeline todo.parentTimeline model
+
+
+getName : { a | title : String } -> String
+getName { title } =
+    if String.isEmpty title then
+        "unbenannt"
+
+    else
+        title

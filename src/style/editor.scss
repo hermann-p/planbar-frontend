@@ -26,3 +26,45 @@
     }
   }
 }
+
+.editor-selection {
+  display: flex;
+  height: 30vh;
+  overflow: hidden;
+}
+
+.picker {
+  flex: 1;
+  transition: all 300ms ease-out;
+  overflow-y: auto;
+  color: #444;
+  background-color: white;
+  opacity: 70%;
+
+  &:not(:first-of-type) {
+    margin-left: 6px;
+  }
+  &:not(:last-of-type) {
+    margin-right: 6px;
+  }
+
+  &__menu-item {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 4px 8px;
+
+    &:hover {
+      color: white;
+      background-color: lightcoral;
+    }
+    &--selected {
+      background-color: orange;
+      color: white;
+    }
+  }
+
+  &--active {
+    flex: 1.5;
+    opacity: 100%;
+  }
+}
