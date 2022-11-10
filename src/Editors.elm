@@ -63,8 +63,11 @@ type alias Selectable a =
     }
 
 
-elementPicker : String -> { options : List (Selectable a), onSelect : Int -> Msg, active : Bool, selectedOptionID : Int } -> Html Msg
-elementPicker _ { options, onSelect, active, selectedOptionID } =
+elementPicker :
+    String
+    -> { options : List (Selectable a), onSelect : Int -> Msg, active : Bool, selectedOptionID : Int, onCreate : Msg }
+    -> Html Msg
+elementPicker _ { options, onSelect, active, selectedOptionID, onCreate } =
     let
         baseClass =
             "picker"
@@ -80,6 +83,7 @@ elementPicker _ { options, onSelect, active, selectedOptionID } =
     div [ classList [ ( baseClass, True ), ( baseClass ++ "--active", active ) ] ]
         [ ul [ class (baseClass ++ "__item-list menu") ]
             (List.map toPickable options)
+        , actionButton iconCreate (\_ -> onCreate)
         ]
 
 
@@ -149,6 +153,7 @@ editorSelection ({ editorState, projects, timelines, todos } as model) =
                 , onSelect = \id -> ProjectMsg (getProject id model |> Maybe.map EditProject |> Maybe.withDefault Noop)
                 , active = activeElement == AEProject
                 , selectedOptionID = project |> Maybe.map .id |> Maybe.withDefault -1
+                , onCreate = MainMsg CreateProject
                 }
 
         timelinePicker =
@@ -157,6 +162,13 @@ editorSelection ({ editorState, projects, timelines, todos } as model) =
                 , onSelect = \id -> ProjectMsg (getTimeline id model |> Maybe.map EditTimeline |> Maybe.withDefault Noop)
                 , active = activeElement == AETimeline
                 , selectedOptionID = timeline |> Maybe.map .id |> Maybe.withDefault -1
+                , onCreate =
+                    case project of
+                        Just p ->
+                            MainMsg (CreateTimeline p.id)
+
+                        _ ->
+                            ProjectMsg Noop
                 }
 
         todoPicker =
@@ -165,6 +177,13 @@ editorSelection ({ editorState, projects, timelines, todos } as model) =
                 , onSelect = \id -> ProjectMsg (getTodo id model |> Maybe.map EditTodo |> Maybe.withDefault Noop)
                 , active = activeElement == AETodo
                 , selectedOptionID = todo |> Maybe.map .id |> Maybe.withDefault -1
+                , onCreate =
+                    case timeline of
+                        Just tl ->
+                            MainMsg (CreateTodo tl.id)
+
+                        _ ->
+                            ProjectMsg Noop
                 }
     in
     section [ class "editor-selection" ]

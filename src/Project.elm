@@ -313,15 +313,11 @@ update msg ({ page } as model) =
                     let
                         project =
                             createProject model
-
-                        timeline =
-                            createTimeline project.id { model | projects = List.append model.projects [ project ] }
                     in
                     update
-                        (ProjectMsg <| EditTimeline timeline)
+                        (ProjectMsg <| EditProject project)
                         { model
                             | projects = List.append model.projects [ project ]
-                            , timelines = List.append model.timelines [ timeline ]
                         }
 
                 ( CreateTimeline parentId, _ ) ->
