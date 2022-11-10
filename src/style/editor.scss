@@ -40,38 +40,20 @@
   color: #444;
   background-color: white;
   opacity: 70%;
-
   position: relative;
+
   button {
     position: absolute;
     bottom: 6px;
     right: 6px;
   }
 
-  &:not(:first-of-type) {
-    margin-left: 6px;
-  }
-  &:not(:last-of-type) {
-    margin-right: 6px;
-  }
-
-  &__menu-item {
-    cursor: pointer;
-    border-radius: 4px;
-    padding: 4px 8px;
-
-    &:hover {
-      color: white;
-      background-color: lightcoral;
-    }
-    &--selected {
-      background-color: orange;
-      color: white;
-    }
-  }
-
   &--active {
     flex: 1.5;
     opacity: 100%;
+  }
+
+  &__item-list {
+    padding-inline-start: 0;
   }
 }

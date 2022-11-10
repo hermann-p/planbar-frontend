@@ -78,12 +78,14 @@ elementPicker _ { options, onSelect, active, selectedOptionID, onCreate } =
                 [ classList [ ( baseClass ++ "__menu-item menu-item", True ), ( baseClass ++ "__menu-item--selected selected", option.id == selectedOptionID ) ]
                 , onClick (onSelect option.id)
                 ]
-                [ div [ class (baseClass ++ "__item-text") ] [ text <| getName option ] ]
+                [ a [ href "#", class (baseClass ++ "__item-text") ] [ text <| getName option ] ]
     in
-    div [ classList [ ( baseClass, True ), ( baseClass ++ "--active", active ) ] ]
-        [ ul [ class (baseClass ++ "__item-list menu") ]
-            (List.map toPickable options)
-        , actionButton iconCreate (\_ -> onCreate)
+    div [ classList [ ( baseClass, True ), ( "frame", True ), ( baseClass ++ "--active", active ) ] ]
+        [ div [ class "frame__body" ]
+            [ ul [ class (baseClass ++ "__item-list menu") ]
+                (List.map toPickable options)
+            , actionButton iconCreate (\_ -> onCreate)
+            ]
         ]
 
 
@@ -471,8 +473,7 @@ editorView model =
                         ]
                         []
                     , h5 [ class "frame__title level-item" ]
-                        [ text "Projekte bearbeiten"
-                        ]
+                        [ text "Projekte bearbeiten" ]
                     ]
                 , div [ class "frame__body" ]
                     [ editorSelection model
