@@ -23,12 +23,16 @@ timelines =
     ]
 
 
+d =
+    738473
+
+
 todos : List Todo
 todos =
-    [ mkTodo 1 0 "Stroh zu Gold spinnen" 738440 True
-    , mkTodo 1 1 "Backen" 738456 True
-    , mkTodo 1 2 "Brauen" 738457 False
-    , mkTodo 1 3 "Der Königin ihr Kind holen" 738458 False
+    [ mkTodo 1 0 "Stroh zu Gold spinnen" (d - 10) True
+    , mkTodo 1 1 "Backen" d True
+    , mkTodo 1 2 "Brauen" (d + 1) False
+    , mkTodo 1 3 "Der Königin ihr Kind holen" (d + 2) False
     , mkTodo 2 4 "Urlaubstag" 738456 False
     , mkTodo 2 5 "Brückentag" 738459 False
     , mkTodo 2 6 "Feiertag" 738460 False

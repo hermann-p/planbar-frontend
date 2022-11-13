@@ -57,3 +57,10 @@
     padding-inline-start: 0;
   }
 }
+
+.breadcrumbs {
+  font-style: italic;
+  &-separator {
+    margin: 0 6px;
+  }
+}

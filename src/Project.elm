@@ -388,6 +388,16 @@ listFind pred list =
         |> List.head
 
 
+listIntersperse : a -> List a -> List a
+listIntersperse el coll =
+    case coll of
+        first :: rest ->
+            List.foldl (\next list -> List.append list [ el, next ]) [ first ] rest
+
+        _ ->
+            []
+
+
 getProject : ProjectID -> Model -> Maybe Project
 getProject id model =
     listFind (\p -> p.id == id) model.projects

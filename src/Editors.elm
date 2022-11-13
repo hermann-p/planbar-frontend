@@ -42,6 +42,7 @@ import Project
         , getSelectedTodo
         , getTimeline
         , getTodo
+        , listIntersperse
         , noHtml
         )
 
@@ -293,7 +294,7 @@ todoEditor td =
                         ]
                     , div []
                         [ label [ for "todo-done" ] [ text "Erledigt" ]
-                        , input [ type_ "checkbox", id "todo-done", checked todo.done, onCheck <| \done -> ProjectMsg (SetTodo { todo | done = not done }) ] []
+                        , input [ type_ "checkbox", class "form-ext-checkbox", id "todo-done", checked todo.done, onCheck <| \done -> ProjectMsg (SetTodo { todo | done = not done }) ] []
                         ]
                     ]
                 ]
@@ -448,11 +449,24 @@ editorCard _ children editor =
         ]
 
 
+breadcrumbs : List String -> Html Msg
+breadcrumbs coll =
+    div [ class "breadcrumbs" ]
+        (coll
+            |> List.map (\str -> span [ class "breadcrumbs-item" ] [ text str ])
+            |> listIntersperse (span [ class "breadcrumbs-separator" ] [ text ">" ])
+        )
+
+
 editorView : Model -> Html Msg
 editorView model =
     let
         baseClass =
             "editor-wrapper"
+
+        getTitle : Maybe { a | title : String } -> String
+        getTitle el =
+            el |> Maybe.map (\e -> { title = e.title }) |> Maybe.withDefault { title = "" } |> getName
     in
     div
         [ classList [ ( "overlay-bg", True ), ( "overlay-bg--open", model.editorState /= EditorClosed ) ]
@@ -481,13 +495,40 @@ editorView model =
                         []
                         [ case model.editorState of
                             EditorProject id ->
-                                editorCard "Project" (projectSelector model) (projectEditor <| getProject id model)
+                                let
+                                    project =
+                                        getProject id model
+                                in
+                                editorCard "Project"
+                                    [ breadcrumbs [ getTitle project ] ]
+                                    (projectEditor project)
 
                             EditorTimeline id ->
-                                editorCard "Phase" (timelineSelector model) (timelineEditor <| getTimeline id model)
+                                let
+                                    timeline =
+                                        getTimeline id model
+
+                                    project =
+                                        timeline |> Maybe.andThen (\tl -> getParentProject tl model)
+                                in
+                                editorCard "Phase"
+                                    [ breadcrumbs [ getTitle project, getTitle timeline ] ]
+                                    (timelineEditor timeline)
 
                             EditorTodo id ->
-                                editorCard "Aufgabe" (todoSelector model) (todoEditor <| getTodo id model)
+                                let
+                                    todo =
+                                        getTodo id model
+
+                                    timeline =
+                                        todo |> Maybe.andThen (\td -> getParentTimeline td model)
+
+                                    project =
+                                        timeline |> Maybe.andThen (\tl -> getParentProject tl model)
+                                in
+                                editorCard "Aufgabe"
+                                    [ breadcrumbs [ getTitle project, getTitle timeline, getTitle todo ] ]
+                                    (todoEditor <| getTodo id model)
 
                             _ ->
                                 noHtml
